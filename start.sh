@@ -95,7 +95,23 @@ if [ "$MODE" != "backend" ]; then
     fi
 fi
 
+# 释放已占用的端口
+kill_port() {
+    local port=$1
+    local pids
+    pids=$(lsof -ti "tcp:$port" 2>/dev/null) || true
+    if [ -n "$pids" ]; then
+        echo "$pids" | while read -r pid; do
+            [ -z "$pid" ] && continue
+            echo "  端口 $port 已被占用，正在释放 (PID: $pid)..."
+            kill -9 "$pid" 2>/dev/null || true
+        done
+        sleep 1
+    fi
+}
+
 if [ "$MODE" != "frontend" ]; then
+    kill_port "$BACKEND_PORT"
     echo "==> 启动后端 (端口 $BACKEND_PORT)..."
     (cd "$BACKEND_DIR" && "$VENV_DIR/bin/uvicorn" app.main:app --host 0.0.0.0 --port "$BACKEND_PORT" --reload) &
     BACKEND_PID=$!
@@ -103,6 +119,7 @@ if [ "$MODE" != "frontend" ]; then
 fi
 
 if [ "$MODE" != "backend" ]; then
+    kill_port "$FRONTEND_PORT"
     echo "==> 启动前端 (端口 $FRONTEND_PORT)..."
     (cd "$FRONTEND_DIR" && npx next dev --port "$FRONTEND_PORT") &
     FRONTEND_PID=$!

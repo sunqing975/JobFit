@@ -4,115 +4,242 @@ interface Props {
   content: Record<string, unknown>
 }
 
+interface ExpItem { company: string; location?: string; role: string; period: string; bullets: string[]; techStack?: string[] }
+interface ProjItem { name: string; role: string; period: string; description: string; bullets: string[]; techStack?: string[]; url?: string }
+interface EduItem { school: string; degree: string; major: string; period: string; gpa?: string }
+interface SkillCat { category: string; skills: string[] }
+interface CertItem { name: string; issuer: string; date: string; url?: string }
+interface LangItem { name: string; proficiency: string }
+interface AwardItem { name: string; issuer: string; date: string }
+interface PubItem { title: string; publisher: string; date: string; url?: string }
+
+function Section({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <div className="section-title">{title}</div>
+      {children}
+    </div>
+  )
+}
+
 export function ResumePreview({ content }: Props) {
-  const skills = (content.skills as string[]) || []
-  const experience = (content.experience as any[]) || []
-  const education = (content.education as any[]) || []
-  const projects = (content.projects as any[]) || []
+  const avatar = content.avatar as string | undefined
+  const name = (content.name as string) || ""
+  const title = (content.title as string) || ""
+  const email = (content.email as string) || ""
+  const phone = (content.phone as string) || ""
+  const location = (content.location as string) || ""
+  const website = (content.website as string) || ""
+  const linkedin = (content.linkedin as string) || ""
+  const github = (content.github as string) || ""
+  const summary = (content.summary as string) || ""
+  const skillCategories = (content.skillCategories as SkillCat[]) || []
+  const experience = (content.experience as ExpItem[]) || []
+  const projects = (content.projects as ProjItem[]) || []
+  const education = (content.education as EduItem[]) || []
+  const certifications = (content.certifications as CertItem[]) || []
+  const languages = (content.languages as LangItem[]) || []
+  const awards = (content.awards as AwardItem[]) || []
+  const publications = (content.publications as PubItem[]) || []
+
+  const contactItems = [
+    email && `📧 ${email}`,
+    phone && `📞 ${phone}`,
+    location && `📍 ${location}`,
+    website && `🔗 ${website}`,
+    linkedin && `💼 ${linkedin}`,
+    github && `🐙 ${github}`,
+  ].filter(Boolean)
 
   return (
-    <div className="prose max-w-none">
-      <div className="border-b pb-4 mb-4">
-        <h1 className="text-2xl font-bold m-0">
-          {(content.name as string) || "未填写姓名"}
-        </h1>
-        <p className="text-gray-600 m-0 mt-1">
-          {(content.title as string) || ""}
-        </p>
-        <div className="text-sm text-gray-500 mt-2">
-          {content.email as string}{(content.email as string) && (content.phone as string) ? " | " : ""}
-          {content.phone as string}
+    <div className="a4-paper">
+      {/* Header */}
+      <div className="flex items-start gap-6 pb-6 border-b-2 border-slate-200">
+        {avatar && (
+          <img src={avatar} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-slate-200 flex-shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-3xl font-bold text-slate-900">{name || "你的姓名"}</h1>
+          {title && <p className="text-lg text-blue-600 font-medium mt-1">{title}</p>}
+          {contactItems.length > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-slate-500">
+              {contactItems.map((item, i) => <span key={i}>{item}</span>)}
+            </div>
+          )}
         </div>
       </div>
 
-      {(content.summary as string) && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold border-b pb-1 mb-2">个人总结</h2>
-          <p className="text-gray-700 text-sm leading-relaxed">
-            {content.summary as string}
-          </p>
-        </div>
+      {/* Summary */}
+      {summary && (
+        <Section title="个人总结" className="mt-6">
+          <p className="text-sm text-slate-700 leading-relaxed">{summary}</p>
+        </Section>
       )}
 
-      {skills.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold border-b pb-1 mb-2">技能</h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill, i) => (
-              <span
-                key={i}
-                className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-              >
-                {skill}
+      {/* Skills */}
+      {skillCategories.filter(c => c.category).length > 0 && (
+        <Section title="专业技能" className="mt-6">
+          <div className="space-y-3">
+            {skillCategories.filter(c => c.category).map((cat, i) => (
+              <div key={i}>
+                <span className="text-sm font-medium text-slate-700">{cat.category}：</span>
+                <div className="inline-flex flex-wrap gap-1.5 mt-1">
+                  {cat.skills.filter(Boolean).map((s, j) => (
+                    <span key={j} className="tag">{s}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Work Experience */}
+      {experience.length > 0 && (
+        <Section title="工作经历" className="mt-6">
+          <div className="space-y-5">
+            {experience.map((exp, i) => (
+              <div key={i}>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <span className="font-semibold text-slate-800">{exp.role}</span>
+                    <span className="text-slate-500 mx-2">·</span>
+                    <span className="text-slate-600">{exp.company}</span>
+                    {exp.location && <span className="text-slate-400 ml-1 text-sm">({exp.location})</span>}
+                  </div>
+                  <span className="text-sm text-slate-400 whitespace-nowrap ml-4">{exp.period}</span>
+                </div>
+                {(exp.techStack || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {exp.techStack!.map((t, j) => <span key={j} className="tag !bg-slate-100 !text-slate-600">{t}</span>)}
+                  </div>
+                )}
+                {exp.bullets.filter(Boolean).length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {exp.bullets.filter(Boolean).map((b, j) => (
+                      <li key={j} className="text-sm text-slate-700 leading-relaxed pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400">{b}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Projects */}
+      {projects.length > 0 && (
+        <Section title="项目经历" className="mt-6">
+          <div className="space-y-5">
+            {projects.map((proj, i) => (
+              <div key={i}>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <span className="font-semibold text-slate-800">{proj.name}</span>
+                    <span className="text-slate-500 mx-2">·</span>
+                    <span className="text-slate-600">{proj.role}</span>
+                  </div>
+                  <span className="text-sm text-slate-400 whitespace-nowrap ml-4">{proj.period}</span>
+                </div>
+                {proj.description && <p className="text-sm text-slate-500 mt-1">{proj.description}</p>}
+                {(proj.techStack || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {proj.techStack!.map((t, j) => <span key={j} className="tag !bg-slate-100 !text-slate-600">{t}</span>)}
+                  </div>
+                )}
+                {proj.bullets.filter(Boolean).length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {proj.bullets.filter(Boolean).map((b, j) => (
+                      <li key={j} className="text-sm text-slate-700 leading-relaxed pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400">{b}</li>
+                    ))}
+                  </ul>
+                )}
+                {proj.url && <a href={proj.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">{proj.url}</a>}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Education */}
+      {education.length > 0 && (
+        <Section title="教育背景" className="mt-6">
+          <div className="space-y-3">
+            {education.map((edu, i) => (
+              <div key={i} className="flex items-baseline justify-between">
+                <div>
+                  <span className="font-semibold text-slate-800">{edu.school}</span>
+                  <span className="text-slate-500 mx-2">·</span>
+                  <span className="text-slate-600">{edu.major}</span>
+                  <span className="text-slate-400 ml-1 text-sm">({edu.degree})</span>
+                  {edu.gpa && <span className="text-slate-400 ml-2 text-sm">GPA: {edu.gpa}</span>}
+                </div>
+                <span className="text-sm text-slate-400 whitespace-nowrap ml-4">{edu.period}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Certifications */}
+      {certifications.filter(c => c.name).length > 0 && (
+        <Section title="证书认证" className="mt-6">
+          <div className="space-y-2">
+            {certifications.filter(c => c.name).map((cert, i) => (
+              <div key={i} className="flex items-baseline justify-between text-sm">
+                <div>
+                  <span className="text-slate-700 font-medium">{cert.name}</span>
+                  <span className="text-slate-400 ml-2">{cert.issuer}</span>
+                </div>
+                <span className="text-slate-400">{cert.date}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Languages */}
+      {languages.filter(l => l.name).length > 0 && (
+        <Section title="语言能力" className="mt-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            {languages.filter(l => l.name).map((lang, i) => (
+              <span key={i} className="text-sm text-slate-700">
+                {lang.name}<span className="text-slate-400 ml-1">({lang.proficiency})</span>
               </span>
             ))}
           </div>
-        </div>
+        </Section>
       )}
 
-      {experience.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold border-b pb-1 mb-3">工作经历</h2>
-          {experience.map((exp, i) => (
-            <div key={i} className="mb-4">
-              <div className="flex items-baseline justify-between">
-                <h3 className="font-medium m-0">{exp.role as string}</h3>
-                <span className="text-sm text-gray-500">{exp.period as string}</span>
+      {/* Awards */}
+      {awards.filter(a => a.name).length > 0 && (
+        <Section title="获奖荣誉" className="mt-6">
+          <div className="space-y-2">
+            {awards.filter(a => a.name).map((award, i) => (
+              <div key={i} className="flex items-baseline justify-between text-sm">
+                <span className="text-slate-700">{award.name}<span className="text-slate-400 ml-2">{award.issuer}</span></span>
+                <span className="text-slate-400">{award.date}</span>
               </div>
-              <p className="text-sm text-gray-600 m-0">{exp.company as string}</p>
-              {(exp.bullets as string[] || []).length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {((exp.bullets as string[]) || []).map((bullet, j) => (
-                    <li key={j} className="text-sm text-gray-700">
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Section>
       )}
 
-      {projects.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold border-b pb-1 mb-3">项目经历</h2>
-          {projects.map((proj, i) => (
-            <div key={i} className="mb-4">
-              <div className="flex items-baseline justify-between">
-                <h3 className="font-medium m-0">{proj.name as string}</h3>
-                <span className="text-sm text-gray-500">{proj.period as string}</span>
+      {/* Publications */}
+      {publications.filter(p => p.title).length > 0 && (
+        <Section title="出版物" className="mt-6">
+          <div className="space-y-2">
+            {publications.filter(p => p.title).map((pub, i) => (
+              <div key={i} className="flex items-baseline justify-between text-sm">
+                <div>
+                  <span className="text-slate-700 font-medium">{pub.title}</span>
+                  <span className="text-slate-400 ml-2">{pub.publisher}</span>
+                </div>
+                <span className="text-slate-400">{pub.date}</span>
               </div>
-              <p className="text-sm text-gray-600 m-0">{proj.description as string}</p>
-              {(proj.bullets as string[] || []).length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {((proj.bullets as string[]) || []).map((bullet, j) => (
-                    <li key={j} className="text-sm text-gray-700">
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {education.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold border-b pb-1 mb-3">教育背景</h2>
-          {education.map((edu, i) => (
-            <div key={i} className="flex items-baseline justify-between">
-              <div>
-                <span className="font-medium">{edu.school as string}</span>
-                <span className="text-gray-600 ml-2">
-                  {edu.major as string} · {edu.degree as string}
-                </span>
-              </div>
-              <span className="text-sm text-gray-500">{edu.period as string}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Section>
       )}
     </div>
   )

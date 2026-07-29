@@ -7,6 +7,11 @@ interface Props {
   resume: TailoredResume
 }
 
+interface ExpItem { company: string; location?: string; role: string; period: string; bullets: string[]; techStack?: string[] }
+interface ProjItem { name: string; role: string; period: string; description: string; bullets: string[]; techStack?: string[]; url?: string }
+interface EduItem { school: string; degree: string; major: string; period: string; gpa?: string }
+interface SkillCat { category: string; skills: string[] }
+
 export function PDFExporter({ resume }: Props) {
   const [exporting, setExporting] = useState(false)
 
@@ -14,133 +19,51 @@ export function PDFExporter({ resume }: Props) {
     setExporting(true)
     try {
       const { pdf } = await import("@react-pdf/renderer")
-      const content = resume.generated_content
+      const c = resume.generated_content
 
       const Doc = (
-        <div
-          style={{
-            padding: 40,
-            fontFamily: "Helvetica",
-            fontSize: 12,
-            lineHeight: 1.5,
-          }}
-        >
-          <div
-            style={{
-              borderBottom: "2 solid #333",
-              paddingBottom: 10,
-              marginBottom: 20,
-            }}
-          >
-            <div style={{ fontSize: 24, fontWeight: "bold" }}>
-              {String(content.name || "")}
-            </div>
-            <div style={{ color: "#666", marginTop: 4 }}>
-              {String(content.title || "")}
-            </div>
-            <div style={{ fontSize: 10, color: "#999", marginTop: 8 }}>
-              {String(content.email || "")}
-              {content.email && content.phone ? " | " : ""}
-              {String(content.phone || "")}
+        <div style={{ padding: 40, fontFamily: "Helvetica", fontSize: 11, lineHeight: 1.5, color: "#333" }}>
+          {/* Header */}
+          <div style={{ display: "flex", gap: 20, paddingBottom: 16, borderBottom: "2 solid #ddd", marginBottom: 20 }}>
+            {(c.avatar as string) && <img src={String(c.avatar)} style={{ width: 72, height: 72, borderRadius: 36, objectFit: "cover" }} />}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 24, fontWeight: "bold", color: "#111" }}>{String(c.name || "")}</div>
+              {(c.title as string) && <div style={{ fontSize: 14, color: "#2563eb", marginTop: 4 }}>{String(c.title)}</div>}
             </div>
           </div>
 
-          {content.summary ? (
-            <div style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: "bold",
-                  borderBottom: "1 solid #ccc",
-                  paddingBottom: 4,
-                  marginBottom: 8,
-                }}
-              >
-                个人总结
-              </div>
-              <div style={{ color: "#444", fontSize: 11 }}>
-                {String(content.summary)}
-              </div>
-            </div>
-          ) : null}
+          {/* Summary */}
+          {(c.summary as string) && <div style={{ marginBottom: 20 }}><div style={{ fontSize: 10, fontWeight: "bold", color: "#2563eb", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>个人总结</div><div style={{ fontSize: 11, color: "#555" }}>{String(c.summary)}</div></div>}
 
-          {(content.skills as string[] || []).length > 0 ? (
-            <div style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: "bold",
-                  borderBottom: "1 solid #ccc",
-                  paddingBottom: 4,
-                  marginBottom: 8,
-                }}
-              >
-                技能
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {((content.skills as string[]) || []).map((skill, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      backgroundColor: "#f3f4f6",
-                      padding: "2 8",
-                      borderRadius: 4,
-                      fontSize: 10,
-                    }}
-                  >
-                    {skill}
-                  </span>
+          {/* Skills */}
+          {((c.skillCategories as SkillCat[]) || []).filter(s => s.category).map((cat, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: "bold", color: "#333" }}>{cat.category}：</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                {cat.skills.filter(Boolean).map((s, j) => (
+                  <span key={j} style={{ backgroundColor: "#eef2ff", color: "#4338ca", padding: "2 8", borderRadius: 4, fontSize: 10 }}>{s}</span>
                 ))}
               </div>
             </div>
-          ) : null}
+          ))}
 
-          {((content.experience as any[]) || []).map((exp, i) => (
+          {/* Experience */}
+          {((c.experience as ExpItem[]) || []).map((exp, i) => (
             <div key={i} style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <div style={{ fontWeight: "bold", fontSize: 12 }}>
-                  {exp.role}
-                </div>
-                <div style={{ fontSize: 10, color: "#666" }}>{exp.period}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <div style={{ fontWeight: "bold", fontSize: 12, color: "#111" }}>{exp.role} <span style={{ fontWeight: "normal", color: "#666" }}>· {exp.company}{exp.location ? ` (${exp.location})` : ""}</span></div>
+                <div style={{ fontSize: 10, color: "#999" }}>{exp.period}</div>
               </div>
-              <div style={{ fontSize: 11, color: "#666" }}>{exp.company}</div>
-              {(exp.bullets || []).length > 0 ? (
-                <ul style={{ marginTop: 4, paddingLeft: 16 }}>
-                  {(exp.bullets as string[]).map((bullet: string, j: number) => (
-                    <li key={j} style={{ fontSize: 11, marginBottom: 2 }}>
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              {(exp.techStack || []).length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 2, marginTop: 4 }}>{exp.techStack!.map((t, j) => <span key={j} style={{ backgroundColor: "#f1f5f9", color: "#475569", padding: "1 6", borderRadius: 3, fontSize: 9 }}>{t}</span>)}</div>}
+              {(exp.bullets || []).filter(Boolean).length > 0 && <ul style={{ marginTop: 4, paddingLeft: 16, margin: "4 0 0 0" }}>{exp.bullets.filter(Boolean).map((b, j) => <li key={j} style={{ fontSize: 11, marginBottom: 2, color: "#555" }}>{b}</li>)}</ul>}
             </div>
           ))}
 
-          {((content.education as any[]) || []).map((edu, i) => (
-            <div key={i} style={{ marginBottom: 8 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: "bold", fontSize: 12 }}>
-                    {edu.school}
-                  </span>
-                  <span style={{ color: "#666", fontSize: 11, marginLeft: 8 }}>
-                    {edu.major} · {edu.degree}
-                  </span>
-                </div>
-                <div style={{ fontSize: 10, color: "#666" }}>{edu.period}</div>
-              </div>
+          {/* Education */}
+          {((c.education as EduItem[]) || []).map((edu, i) => (
+            <div key={i} style={{ marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <div><span style={{ fontWeight: "bold", fontSize: 11, color: "#111" }}>{edu.school}</span><span style={{ color: "#666", marginLeft: 6, fontSize: 11 }}>{edu.major} · {edu.degree}{edu.gpa ? `  GPA: ${edu.gpa}` : ""}</span></div>
+              <div style={{ fontSize: 10, color: "#999" }}>{edu.period}</div>
             </div>
           ))}
         </div>
@@ -162,11 +85,7 @@ export function PDFExporter({ resume }: Props) {
   }
 
   return (
-    <button
-      onClick={handleExport}
-      disabled={exporting}
-      className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
-    >
+    <button onClick={handleExport} disabled={exporting} className="btn-primary">
       {exporting ? "导出中..." : "导出 PDF"}
     </button>
   )

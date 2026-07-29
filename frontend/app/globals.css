@@ -3,5 +3,85 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-slate-200;
+}
+
+.card-header {
+  @apply flex items-center justify-between px-5 py-4 border-b border-slate-100;
+}
+
+.card-body {
+  @apply p-5;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-slate-600 mb-1.5;
+}
+
+.form-input {
+  @apply w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm
+    placeholder:text-slate-400
+    focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+    transition-colors;
+}
+
+.form-textarea {
+  @apply form-input resize-none;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+    transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm;
+}
+
+.btn-secondary {
+  @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 active:bg-slate-300 border border-slate-300;
+}
+
+.btn-ghost {
+  @apply btn text-slate-500 hover:bg-slate-100 active:bg-slate-200;
+}
+
+.btn-danger {
+  @apply btn bg-red-50 text-red-600 hover:bg-red-100 active:bg-red-200 border border-red-200;
+}
+
+.tag {
+  @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium
+    bg-blue-50 text-blue-700;
+}
+
+.a4-paper {
+  @apply bg-white shadow-xl mx-auto;
+  width: 794px;
+  min-height: 1123px;
+  padding: 60px 56px;
+}
+
+.section-divider {
+  @apply h-px bg-gradient-to-r from-slate-200 to-transparent my-6;
+}
+
+.section-title {
+  @apply text-xs font-semibold text-blue-600 uppercase tracking-wider mb-4;
+}
+
+.field-hint {
+  @apply text-xs text-slate-400 mt-1;
+}
+
+@media (max-width: 1023px) {
+  .a4-paper {
+    width: 100%;
+    min-height: auto;
+    padding: 32px 24px;
+  }
 }
