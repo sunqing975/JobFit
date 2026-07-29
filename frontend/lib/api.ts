@@ -23,8 +23,6 @@ export interface MasterResumeVersion {
 export interface TailoredResume {
   id: number
   master_resume_version_id: number
-  job_title: string
-  company_name: string | null
   raw_jd_text: string
   model_used: string
   generated_content: Record<string, unknown>
@@ -58,13 +56,18 @@ export const api = {
     get: (id: number) => request<TailoredResume>(`/api/tailored-resume/${id}`),
     generate: (data: {
       master_resume_version_id: number
-      job_title: string
-      company_name?: string
       raw_jd_text: string
     }) =>
       request<TailoredResume>("/api/tailored-resume/generate", {
         method: "POST",
         body: JSON.stringify(data),
+      }),
+  },
+  optimize: {
+    content: (text: string, type: "summary" | "experience" | "project") =>
+      request<{ optimized: string }>("/api/optimize/content", {
+        method: "POST",
+        body: JSON.stringify({ text, type }),
       }),
   },
   llmConfig: {

@@ -18,8 +18,6 @@ class TailoredResume(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     master_resume_version_id: int = Field(foreign_key="master_resume_versions.id")
-    job_title: str
-    company_name: Optional[str] = None
     raw_jd_text: str
     model_used: str
     generated_content: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))

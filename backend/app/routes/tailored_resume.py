@@ -51,8 +51,6 @@ def generate_tailored_resume(data: TailoredResumeCreate, db: Session = Depends(g
 
     record = TailoredResume(
         master_resume_version_id=data.master_resume_version_id,
-        job_title=data.job_title,
-        company_name=data.company_name,
         raw_jd_text=data.raw_jd_text,
         model_used=llm.model_name,
         generated_content=generated_content,

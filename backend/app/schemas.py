@@ -20,16 +20,12 @@ class MasterResumeResponse(BaseModel):
 
 class TailoredResumeCreate(BaseModel):
     master_resume_version_id: int
-    job_title: str
-    company_name: Optional[str] = None
     raw_jd_text: str
 
 
 class TailoredResumeResponse(BaseModel):
     id: int
     master_resume_version_id: int
-    job_title: str
-    company_name: Optional[str] = None
     raw_jd_text: str
     model_used: str
     generated_content: Dict[str, Any]

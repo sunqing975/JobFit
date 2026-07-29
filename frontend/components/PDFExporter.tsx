@@ -73,7 +73,8 @@ export function PDFExporter({ resume }: Props) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `resume_${resume.job_title.replace(/\s+/g, "_")}.pdf`
+      const firstLine = resume.raw_jd_text.split("\n")[0].trim().slice(0, 20).replace(/\s+/g, "_")
+      a.download = `resume_${firstLine || "custom"}.pdf`
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {

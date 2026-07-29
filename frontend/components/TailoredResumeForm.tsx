@@ -5,20 +5,18 @@ import type { MasterResumeVersion } from "@/lib/api"
 
 interface Props {
   masterVersions: MasterResumeVersion[]
-  onGenerate: (data: { master_resume_version_id: number; job_title: string; company_name?: string; raw_jd_text: string }) => Promise<void>
+  onGenerate: (data: { master_resume_version_id: number; raw_jd_text: string }) => Promise<void>
   generating: boolean
 }
 
 export function TailoredResumeForm({ masterVersions, onGenerate, generating }: Props) {
-  const [jobTitle, setJobTitle] = useState("")
-  const [companyName, setCompanyName] = useState("")
   const [jdText, setJdText] = useState("")
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedVersionId || !jobTitle || !jdText.trim()) return
-    await onGenerate({ master_resume_version_id: selectedVersionId, job_title: jobTitle, company_name: companyName || undefined, raw_jd_text: jdText })
+    if (!selectedVersionId || !jdText.trim()) return
+    await onGenerate({ master_resume_version_id: selectedVersionId, raw_jd_text: jdText })
   }
 
   return (
@@ -39,18 +37,8 @@ export function TailoredResumeForm({ masterVersions, onGenerate, generating }: P
       </div>
 
       <div>
-        <label className="form-label">目标职位</label>
-        <input type="text" className="form-input" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="例如：高级前端工程师" required />
-      </div>
-
-      <div>
-        <label className="form-label">公司名称（可选）</label>
-        <input type="text" className="form-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="目标公司" />
-      </div>
-
-      <div>
         <label className="form-label">岗位 JD</label>
-        <textarea className="form-textarea font-mono" rows={10} value={jdText} onChange={(e) => setJdText(e.target.value)} placeholder="粘贴岗位 JD 文本..." required />
+        <textarea className="form-textarea font-mono" rows={12} value={jdText} onChange={(e) => setJdText(e.target.value)} placeholder={`请粘贴完整的岗位 JD 文本，包含：\n- 职位名称\n- 公司信息\n- 岗位职责\n- 任职要求\n- 加分项等`} required />
       </div>
 
       <button type="submit" disabled={generating} className="btn-primary w-full">

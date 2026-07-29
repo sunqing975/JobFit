@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { api } from "@/lib/api"
 
 interface Props {
   initialContent: Record<string, unknown>
@@ -52,6 +53,7 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
   const [saving, setSaving] = useState(false)
   const [changeLog, setChangeLog] = useState("")
   const [showMore, setShowMore] = useState(false)
+  const [optimizing, setOptimizing] = useState<string | false>(false)
 
   const [avatar, setAvatar] = useState<string>((initialContent.avatar as string) || "")
   const [name, setName] = useState((initialContent.name as string) || "")
@@ -143,7 +145,32 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
 
       {/* 个人总结 */}
       <div className="card">
-        <div className="card-header"><h3 className="font-semibold text-slate-800">个人总结</h3></div>
+        <div className="card-header">
+          <h3 className="font-semibold text-slate-800">个人总结</h3>
+          <button
+            type="button"
+            className="btn-ghost text-sm"
+            disabled={optimizing === "summary" || !summary.trim()}
+            onClick={async () => {
+              setOptimizing("summary")
+              try {
+                const res = await api.optimize.content(summary, "summary")
+                setSummary(res.optimized)
+              } catch (e) {
+                alert(e instanceof Error ? e.message : "优化失败")
+              } finally {
+                setOptimizing(false)
+              }
+            }}
+          >
+            {optimizing === "summary" ? (
+              <span className="flex items-center gap-1">
+                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                AI 优化中...
+              </span>
+            ) : "AI 优化"}
+          </button>
+        </div>
         <div className="card-body">
           <textarea className="form-textarea" rows={4} value={summary} onChange={e => setSummary(e.target.value)} placeholder="简要介绍自己的核心竞争力和职业目标..." />
         </div>
@@ -200,7 +227,10 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
                 <input className="form-input" value={(exp.techStack || []).join(", ")} onChange={e => { const c = [...experience]; c[i].techStack = e.target.value.split(/[,，]\s*/).filter(Boolean); setExperience(c) }} placeholder="React, TypeScript, Node.js" />
               </div>
               <div>
-                <label className="form-label">工作描述（每条一行）</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="form-label !mb-0">工作描述（每条一行）</label>
+                  <button type="button" className="btn-ghost text-xs" disabled={optimizing === "exp" + i || !exp.bullets.join("").trim()} onClick={async () => { setOptimizing("exp" + i); try { const res = await api.optimize.content(exp.bullets.filter(Boolean).join("\n"), "experience"); const c = [...experience]; c[i].bullets = res.optimized.split("\n").filter(Boolean); setExperience(c) } catch (e) { alert(e instanceof Error ? e.message : "优化失败") } finally { setOptimizing(false) } }}>{optimizing === "exp" + i ? "优化中..." : "AI 优化"}</button>
+                </div>
                 <textarea className="form-textarea" rows={3} value={exp.bullets.join("\n")} onChange={e => { const c = [...experience]; c[i].bullets = e.target.value.split("\n").filter(Boolean); if (c[i].bullets.length === 0) c[i].bullets = [""]; setExperience(c) }} placeholder="使用 STAR 原则描述工作成果..." />
               </div>
             </div>
@@ -237,7 +267,10 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
                 <input className="form-input" value={(proj.techStack || []).join(", ")} onChange={e => { const c = [...projects]; c[i].techStack = e.target.value.split(/[,，]\s*/).filter(Boolean); setProjects(c) }} />
               </div>
               <div>
-                <label className="form-label">项目亮点（每条一行）</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="form-label !mb-0">项目亮点（每条一行）</label>
+                  <button type="button" className="btn-ghost text-xs" disabled={optimizing === "proj" + i || !proj.bullets.join("").trim()} onClick={async () => { setOptimizing("proj" + i); try { const res = await api.optimize.content(proj.bullets.filter(Boolean).join("\n"), "project"); const c = [...projects]; c[i].bullets = res.optimized.split("\n").filter(Boolean); setProjects(c) } catch (e) { alert(e instanceof Error ? e.message : "优化失败") } finally { setOptimizing(false) } }}>{optimizing === "proj" + i ? "优化中..." : "AI 优化"}</button>
+                </div>
                 <textarea className="form-textarea" rows={3} value={proj.bullets.join("\n")} onChange={e => { const c = [...projects]; c[i].bullets = e.target.value.split("\n").filter(Boolean); if (c[i].bullets.length === 0) c[i].bullets = [""]; setProjects(c) }} />
               </div>
             </div>
