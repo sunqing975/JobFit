@@ -13,7 +13,7 @@ MODE="both"
 # ---------- 虚拟环境检测与激活 ----------
 VENV_DIR=""
 setup_venv() {
-    for candidate in "$ROOT_DIR/venv" "$ROOT_DIR/.venv" "$BACKEND_DIR/venv" "$BACKEND_DIR/.venv"; do
+    for candidate in "$BACKEND_DIR/venv" "$BACKEND_DIR/.venv" "$ROOT_DIR/venv" "$ROOT_DIR/.venv"; do
         if [ -f "$candidate/bin/activate" ]; then
             VENV_DIR="$candidate"
             break
@@ -21,17 +21,16 @@ setup_venv() {
     done
 
     if [ -z "$VENV_DIR" ]; then
-        echo "==> 未检测到虚拟环境，正在创建 $ROOT_DIR/venv ..."
-        python3 -m venv "$ROOT_DIR/venv"
-        VENV_DIR="$ROOT_DIR/venv"
+        echo "==> 未检测到虚拟环境，正在创建 $BACKEND_DIR/venv ..."
+        python3 -m venv "$BACKEND_DIR/venv"
+        VENV_DIR="$BACKEND_DIR/venv"
     fi
 
-    echo "==> 激活虚拟环境: $VENV_DIR"
-    source "$VENV_DIR/bin/activate"
+    echo "==> 使用虚拟环境: $VENV_DIR"
 
-    if [ "$INSTALL_DEPS" = true ]; then
+    if [ "$INSTALL_DEPS" = true ] || [ ! -f "$VENV_DIR/bin/uvicorn" ]; then
         echo "==> 安装后端依赖..."
-        pip install -r "$BACKEND_DIR/requirements.txt" -q
+        "$VENV_DIR/bin/pip" install -r "$BACKEND_DIR/requirements.txt" -q
     fi
 }
 
@@ -98,7 +97,7 @@ fi
 
 if [ "$MODE" != "frontend" ]; then
     echo "==> 启动后端 (端口 $BACKEND_PORT)..."
-    (cd "$BACKEND_DIR" && uvicorn app.main:app --host 0.0.0.0 --port "$BACKEND_PORT" --reload) &
+    (cd "$BACKEND_DIR" && "$VENV_DIR/bin/uvicorn" app.main:app --host 0.0.0.0 --port "$BACKEND_PORT" --reload) &
     BACKEND_PID=$!
     sleep 2
 fi
