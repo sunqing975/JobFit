@@ -26,3 +26,9 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# PyInstaller
+backend/build/
+backend/dist/
+backend/app/static/
+backend/*.spec.bak

@@ -1,7 +1,21 @@
+import os
+import sys
+from pathlib import Path
+
 from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy import text
 
-DATABASE_URL = "sqlite:///./jobfit.db"
+
+def _appdata_db_url() -> str:
+    base = Path(os.environ.get("APPDATA", str(Path.home()))) / "JobFit"
+    base.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{(base / 'jobfit.db').as_posix()}"
+
+
+if getattr(sys, "frozen", False):
+    DATABASE_URL = os.environ.get("DATABASE_URL") or _appdata_db_url()
+else:
+    DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite:///./jobfit.db"
 
 engine = create_engine(DATABASE_URL, echo=False)
 

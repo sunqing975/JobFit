@@ -219,3 +219,21 @@ async def generate_resume(
     ...
 
 ```
+
+## 6. 桌面单文件打包（Windows）
+
+将 Web 版打包为单文件 exe：双击启动，自动拉起浏览器访问，无需安装依赖。
+
+```powershell
+.\backend\build.ps1        # 一键打包（构建前端 + PyInstaller）
+.\backend\dist\JobFit.exe  # 打包产物
+```
+
+- 前端静态导出（`next build`）由 FastAPI 同端口托管，页面与 API 天然同源，无 CORS 问题
+- 端口自动探测：8000 起被占用则顺延，浏览器自动打开实际端口
+- **打包版数据库位于 `%APPDATA%\JobFit\jobfit.db`**（onefile 解压目录重启会丢失，故不放在 exe 内）
+- **数据迁移**：如需保留现有数据，手动把 `backend\jobfit.db` 复制到 `%APPDATA%\JobFit\` 后启动即可
+- 打包必须在 Windows 机器执行（PyInstaller 不支持跨平台编译），Mac/Linux 包需对应平台或 CI
+- 首次启动需解压（数秒-十几秒），exe 体积约 400MB（含 RapidOCR 模型与 onnxruntime）；杀毒软件可能误报，属常见现象
+
+开发模式（`start.ps1`）不受影响：仍使用 `backend/jobfit.db`，前端走 3000/8000 分离链路。

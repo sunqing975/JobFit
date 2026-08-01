@@ -30,12 +30,15 @@ JobFit 是一个基于大模型的智能简历定制平台：用户一次性维�
 JobFit/
 ├── backend/                  # FastAPI 后端
 │   ├── app/
-│   │   ├── main.py           # 应用入口，CORS(仅 localhost:3000)，挂载路由
-│   │   ├── database.py       # SQLite 引擎 + get_db 依赖
+│   │   ├── main.py           # 应用入口，CORS(仅 localhost:3000)，挂载路由 + 前端静态文件托管
+│   │   ├── database.py       # SQLite 引擎 + get_db 依赖（打包模式自动切 %APPDATA%\JobFit\jobfit.db）
 │   │   ├── models.py         # SQLModel 表：base_resume_versions / job_resumes / llm_configs
 │   │   ├── schemas.py        # Pydantic 请求/响应模型
 │   │   ├── llm_engine.py     # 获取激活 LLM 客户端 + 简历生成 Prompt
-│   │   └── routes/           # base_resume.py / job_resume.py / optimize.py / llm_config.py
+│   │   └── routes/           # base_resume.py / job_resume.py / optimize.py / llm_config.py / resume_import.py / ocr.py
+│   ├── run.py                # 打包版入口：探测空闲端口 + 自动开浏览器
+│   ├── jobfit.spec           # PyInstaller onefile 配置（datas: 前端静态产物 + rapidocr 模型）
+│   ├── build.ps1             # 一键打包：前端构建 → 拷入 app/static → PyInstaller
 │   ├── requirements.txt
 │   ├── .env.example          # DATABASE_URL=sqlite:///./jobfit.db
 │   └── venv/                 # 虚拟环境（勿提交）
@@ -63,6 +66,7 @@ JobFit/
 - Linux/macOS 使用 `./start.sh`
 - 后端手动启动：`backend/venv/Scripts/uvicorn app.main:app --reload`（工作目录 `backend/`）
 - 前端手动启动：`npm run dev`（工作目录 `frontend/`）
+- 桌面打包：`.\backend\build.ps1` → `backend/dist/JobFit.exe`（前端静态导出由后端同端口托管，打包版数据库在 `%APPDATA%\JobFit\jobfit.db`）
 
 ## 数据模型
 
