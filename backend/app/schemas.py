@@ -62,3 +62,31 @@ class LLMConfigResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ParsedResume(BaseModel):
+    """PDF/文本导入的 LLM 结构化输出（仅草稿，不入库），字段与主履历 content 对齐"""
+
+    name: Optional[str] = None
+    title: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    summary: Optional[str] = None
+    skillCategories: list[dict] = []
+    experience: list[dict] = []
+    projects: list[dict] = []
+    education: list[dict] = []
+    certifications: list[dict] = []
+    languages: list[dict] = []
+    awards: list[dict] = []
+    publications: list[dict] = []
+
+    model_config = {"extra": "ignore"}
+
+
+class ResumeImportTextRequest(BaseModel):
+    text: str

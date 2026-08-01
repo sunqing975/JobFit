@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db
-from .routes import master_resume, tailored_resume, llm_config, optimize
+from .routes import master_resume, tailored_resume, llm_config, optimize, resume_import, ocr
 
 
 @asynccontextmanager
@@ -31,6 +31,8 @@ app.include_router(master_resume.router)
 app.include_router(tailored_resume.router)
 app.include_router(llm_config.router)
 app.include_router(optimize.router)
+app.include_router(resume_import.router)
+app.include_router(ocr.router)
 
 
 @app.get("/api/health")
