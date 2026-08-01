@@ -3,12 +3,12 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel
 
 
-class MasterResumeCreate(BaseModel):
+class BaseResumeCreate(BaseModel):
     content: Dict[str, Any]
     change_log: Optional[str] = None
 
 
-class MasterResumeResponse(BaseModel):
+class BaseResumeResponse(BaseModel):
     id: int
     version: int
     change_log: Optional[str] = None
@@ -18,14 +18,14 @@ class MasterResumeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class TailoredResumeCreate(BaseModel):
-    master_resume_version_id: int
+class JobResumeCreate(BaseModel):
+    base_resume_version_id: int
     raw_jd_text: str
 
 
-class TailoredResumeResponse(BaseModel):
+class JobResumeResponse(BaseModel):
     id: int
-    master_resume_version_id: int
+    base_resume_version_id: int
     raw_jd_text: str
     model_used: str
     generated_content: Dict[str, Any]
@@ -65,7 +65,7 @@ class LLMConfigResponse(BaseModel):
 
 
 class ParsedResume(BaseModel):
-    """PDF/文本导入的 LLM 结构化输出（仅草稿，不入库），字段与主履历 content 对齐"""
+    """PDF/文本导入的 LLM 结构化输出（仅草稿，不入库），字段与基础简历 content 对齐"""
 
     name: Optional[str] = None
     title: Optional[str] = None

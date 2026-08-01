@@ -1,12 +1,12 @@
 "use client"
 
-import type { MasterResumeVersion } from "@/lib/api"
+import type { BaseResumeVersion } from "@/lib/api"
 
 interface Props {
-  versions: MasterResumeVersion[]
+  versions: BaseResumeVersion[]
   selectedId: number | null
-  onSelect: (v: MasterResumeVersion) => void
-  onDelete: (v: MasterResumeVersion) => void
+  onSelect: (v: BaseResumeVersion) => void
+  onDelete: (v: BaseResumeVersion) => void
 }
 
 export function VersionHistory({ versions, selectedId, onSelect, onDelete }: Props) {

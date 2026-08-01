@@ -2,22 +2,22 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { api, type MasterResumeVersion, type TailoredResume, type LLMConfig } from "@/lib/api"
+import { api, type BaseResumeVersion, type JobResume, type LLMConfig } from "@/lib/api"
 
 export default function Home() {
-  const [masterVersions, setMasterVersions] = useState<MasterResumeVersion[]>([])
-  const [tailoredResumes, setTailoredResumes] = useState<TailoredResume[]>([])
+  const [baseVersions, setBaseVersions] = useState<BaseResumeVersion[]>([])
+  const [jobResumes, setJobResumes] = useState<JobResume[]>([])
   const [activeConfig, setActiveConfig] = useState<LLMConfig | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
-      api.masterResume.list().catch(() => [] as MasterResumeVersion[]),
-      api.tailoredResume.list().catch(() => [] as TailoredResume[]),
+      api.baseResume.list().catch(() => [] as BaseResumeVersion[]),
+      api.jobResume.list().catch(() => [] as JobResume[]),
       api.llmConfig.active().catch(() => null),
     ]).then(([versions, resumes, config]) => {
-      setMasterVersions(versions)
-      setTailoredResumes(resumes)
+      setBaseVersions(versions)
+      setJobResumes(resumes)
       setActiveConfig(config)
       setLoading(false)
     })
@@ -28,7 +28,7 @@ export default function Home() {
       <div className="text-center py-12">
         <h1 className="text-4xl font-bold text-slate-900 mb-3">JobFit</h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-          基于大模型的"主简历 — 岗位 JD"精准匹配重构工具
+          基于大模型的"基础简历 — 岗位 JD"精准匹配重构工具
         </p>
       </div>
 
@@ -40,17 +40,17 @@ export default function Home() {
             <div className="card p-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 text-lg">📋</div>
-                <h2 className="font-semibold text-slate-800">主履历版本</h2>
+                <h2 className="font-semibold text-slate-800">基础简历版本</h2>
               </div>
-              <p className="text-3xl font-bold text-blue-600">{masterVersions.length}</p>
+              <p className="text-3xl font-bold text-blue-600">{baseVersions.length}</p>
               <p className="text-sm text-slate-400 mt-1">已保存的版本</p>
             </div>
             <div className="card p-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 text-lg">🎯</div>
-                <h2 className="font-semibold text-slate-800">定制简历</h2>
+                <h2 className="font-semibold text-slate-800">岗位简历</h2>
               </div>
-              <p className="text-3xl font-bold text-green-600">{tailoredResumes.length}</p>
+              <p className="text-3xl font-bold text-green-600">{jobResumes.length}</p>
               <p className="text-sm text-slate-400 mt-1">已生成</p>
             </div>
             <div className="card p-6">
@@ -72,12 +72,12 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Link href="/master-resume" className="card p-6 hover:shadow-md transition-shadow group">
-              <h2 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">管理主履历</h2>
+            <Link href="/base-resume" className="card p-6 hover:shadow-md transition-shadow group">
+              <h2 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">管理基础简历</h2>
               <p className="text-sm text-slate-500 mt-2">录入和管理完整履历信息，支持版本历史追溯和实时预览</p>
             </Link>
-            <Link href="/tailored-resume" className="card p-6 hover:shadow-md transition-shadow group">
-              <h2 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">生成定制简历</h2>
+            <Link href="/job-resume" className="card p-6 hover:shadow-md transition-shadow group">
+              <h2 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">生成岗位简历</h2>
               <p className="text-sm text-slate-500 mt-2">粘贴岗位 JD，AI 自动生成匹配的简历，支持在线预览和 PDF 导出</p>
             </Link>
           </div>

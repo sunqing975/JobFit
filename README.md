@@ -3,8 +3,8 @@
 ## 1. 项目概述
 
 * **项目名称**：JobFit
-* **核心定位**：基于大模型的“主简历 - 岗位 JD”精准匹配重构工具。
-* **核心价值**：用户仅需一次性维护一份全量的“主履历库（Master Resume）”，后续每次申请新岗位时，只需粘贴岗位 JD 或链接，系统即可自动抽取匹配点，按 STAR 原则动态重构履历并快速生成针对该岗位的专属简历。
+* **核心定位**：基于大模型的“基础简历 - 岗位 JD”精准匹配重构工具。
+* **核心价值**：用户仅需一次性维护一份全量的“基础简历库（Base Resume）”，后续每次申请新岗位时，只需粘贴岗位 JD 或链接，系统即可自动抽取匹配点，按 STAR 原则动态重构履历并快速生成针对该岗位的专属岗位简历。
 
 ---
 
@@ -25,8 +25,8 @@
 
 ```
 ┌─────────────────┐       ┌─────────────────┐
-│ Master Resume   │       │   岗位 JD 描述   │
-│ (主履历 JSON)   │       │  (文本或 URL)   │
+│  Base Resume    │       │   岗位 JD 描述   │
+│ (基础简历 JSON) │       │  (文本或 URL)   │
 └────────┬────────┘       └────────┬────────┘
          │                         │
          └───────────┬─────────────┘
@@ -36,7 +36,7 @@
                      │
                      ▼
          ┌───────────────────────┐
-         │  Tailored Resume JSON │
+         │   Job Resume JSON     │
          └───────────┬───────────┘
                      │
          ┌───────────┴───────────┐
@@ -45,15 +45,15 @@
 
 ```
 
-### 1. 主履历版本管理（Master Resume）
+### 1. 基础简历版本管理（Base Resume）
 
 * **表单录入**：支持录入个人基本信息、工作经历（多条）、项目经历（多条）、技能树、教育背景等。
-* **版本留存**：每次保存修改时，系统会自动增加 `version` 编号并插入一条新记录（全量 JSON 存存），保留完整修改历史，不直接覆盖旧数据。
+* **版本留存**：每次保存修改时，系统会自动增加 `version` 编号并插入一条新记录（全量 JSON 存储），保留完整修改历史，不直接覆盖旧数据。
 
-### 2. 针对岗位的简历生成（Tailored Resume）
+### 2. 针对岗位的简历生成（Job Resume）
 
 * **岗位输入**：支持输入 Job Title、公司名称、JD 纯文本或 JD 网页链接。
-* **AI 智能重构**：调用 LangChain 引擎，对比主履历与 JD 需求，输出结构化的针对性履历 JSON（突出高匹配关键词，按照 STAR 原则重写 Bullets，限制不虚构履历）。
+* **AI 智能重构**：调用 LangChain 引擎，对比基础简历与 JD 需求，输出结构化的针对性简历 JSON（突出高匹配关键词，按照 STAR 原则重写 Bullets，限制不虚构履历）。
 * **独立保存**：生成的针对性简历单独入库，记录所用的模型名称、JD 原文及匹配后的数据，随时可回顾历史生成结果。
 
 ### 3. 一键 PDF 导出
@@ -80,25 +80,27 @@
 
 ```
                     ┌─────────────────────────┐
-                    │ master_resume_versions  │
+                    │ base_resume_versions    │
                     ├─────────────────────────┤
                     │ id (PK)                 │
                     │ version (INT)           │
                     │ content (JSON)          │
                     │ created_at              │
+                    │ deleted_at              │
                     └────────────┬────────────┘
                                  │ 1
                                  │
                                  │ N
 ┌─────────────────────────┐      │      ┌─────────────────────────┐
-│       llm_configs       │      └─────>│    tailored_resumes     │
+│       llm_configs       │      └─────>│       job_resumes       │
 ├─────────────────────────┤             ├─────────────────────────┤
 │ id (PK)                 │             │ id (PK)                 │
-│ api_base                │             │ master_resume_ver_id(FK)│
+│ api_base                │             │ base_resume_version_id  │
 │ api_key                 │             │ raw_jd_text             │
 │ model_name              │             │ generated_content (JSON)│
 │ is_active               │             │ created_at              │
-└─────────────────────────┘             └─────────────────────────┘
+└─────────────────────────┘             │ deleted_at              │
+                                        └─────────────────────────┘
 
 ```
 
@@ -110,9 +112,9 @@ from typing import Any, Dict, Optional
 from sqlmodel import JSON, Column, Field, SQLModel
 
 
-# 1. 主履历历史版本表
-class MasterResumeVersion(SQLModel, table=True):
-    __tablename__ = "master_resume_versions"
+# 1. 基础简历历史版本表
+class BaseResumeVersion(SQLModel, table=True):
+    __tablename__ = "base_resume_versions"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     version: int = Field(default=1, index=True)
@@ -121,24 +123,24 @@ class MasterResumeVersion(SQLModel, table=True):
         default_factory=dict, sa_column=Column(JSON)
     )  # 保存全量结构化 JSON
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    deleted_at: Optional[datetime] = Field(default=None)
 
 
 # 2. 特定岗位生成记录表
-class TailoredResume(SQLModel, table=True):
-    __tablename__ = "tailored_resumes"
+class JobResume(SQLModel, table=True):
+    __tablename__ = "job_resumes"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    master_resume_version_id: int = Field(
-        foreign_key="master_resume_versions.id"
+    base_resume_version_id: int = Field(
+        foreign_key="base_resume_versions.id"
     )
-    job_title: str
-    company_name: Optional[str] = None
     raw_jd_text: str  # 原始 JD 内容
     model_used: str  # 生成时使用的模型名称
     generated_content: Dict[str, Any] = Field(
         default_factory=dict, sa_column=Column(JSON)
-    )  # 生成的定制 JSON
+    )  # 生成的岗位简历 JSON
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    deleted_at: Optional[datetime] = Field(default=None)
 
 
 # 3. 动态 LLM 配置表
@@ -186,10 +188,10 @@ def get_active_llm_client(db_session) -> ChatOpenAI:
 
 @app.post("/api/generate-resume")
 async def generate_resume(
-    master_version_id: int, jd_text: str, db=Depends(get_db)
+    base_version_id: int, jd_text: str, db=Depends(get_db)
 ):
-    # 1. 查出指定版本 Master Resume
-    master_resume = db.get(MasterResumeVersion, master_version_id)
+    # 1. 查出指定版本 Base Resume
+    base_resume = db.get(BaseResumeVersion, base_version_id)
 
     # 2. 动态获取 LLM
     llm = get_active_llm_client(db)
@@ -199,21 +201,21 @@ async def generate_resume(
         [
             (
                 "system",
-                "你是一个专业的 HR 专家。请根据用户的【主履历】和目标【岗位 JD】，重构一份高匹配度的简历 JSON。",
+                "你是一个专业的 HR 专家。请根据用户的基础简历和目标【岗位 JD】，重构一份高匹配度的简历 JSON。",
             ),
             (
                 "human",
-                "【主履历】：\n{master_json}\n\n【岗位 JD】：\n{jd_text}\n\n请输出针对性的结构化 JSON。",
+                "【基础简历】：\n{master_json}\n\n【岗位 JD】：\n{jd_text}\n\n请输出针对性的结构化 JSON。",
             ),
         ]
     )
 
     chain = prompt | llm
     result = await chain.ainvoke(
-        {"master_json": master_resume.content, "jd_text": jd_text}
+        {"master_json": base_resume.content, "jd_text": jd_text}
     )
 
-    # 4. 存入 tailored_resumes 表并返回结果
+    # 4. 存入 job_resumes 表并返回结果
     ...
 
 ```

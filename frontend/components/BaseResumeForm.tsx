@@ -53,7 +53,7 @@ const emptyLang = (): LanguageItem => ({ name: "", proficiency: "流利" })
 const emptyAward = (): AwardItem => ({ name: "", issuer: "", date: "" })
 const emptyPub = (): PublicationItem => ({ title: "", publisher: "", date: "" })
 
-export function MasterResumeForm({ initialContent, currentVersionId, onSave }: Props) {
+export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
   const [changeLog, setChangeLog] = useState("")

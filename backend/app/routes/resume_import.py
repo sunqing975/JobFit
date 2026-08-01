@@ -8,7 +8,7 @@ from ..llm_engine import parse_resume_text
 from ..ocr_engine import ALLOWED_IMAGE_TYPES, MAX_IMAGES, MIN_IMAGE_TEXT_LENGTH, ocr_images
 from ..schemas import ParsedResume, ResumeImportTextRequest
 
-router = APIRouter(prefix="/api/master-resume", tags=["Master Resume Import"])
+router = APIRouter(prefix="/api/base-resume", tags=["Base Resume Import"])
 
 MAX_PDF_SIZE = 10 * 1024 * 1024
 MAX_TEXT_LENGTH = 100_000

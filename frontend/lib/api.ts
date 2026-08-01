@@ -23,7 +23,7 @@ async function upload<T>(path: string, field: string, files: File[]): Promise<T>
   return res.json()
 }
 
-export interface MasterResumeVersion {
+export interface BaseResumeVersion {
   id: number
   version: number
   change_log: string | null
@@ -31,9 +31,9 @@ export interface MasterResumeVersion {
   created_at: string
 }
 
-export interface TailoredResume {
+export interface JobResume {
   id: number
-  master_resume_version_id: number
+  base_resume_version_id: number
   raw_jd_text: string
   model_used: string
   generated_content: Record<string, unknown>
@@ -72,41 +72,46 @@ export interface ParsedResume {
 }
 
 export const api = {
-  masterResume: {
-    list: () => request<MasterResumeVersion[]>("/api/master-resume/versions"),
-    get: (id: number) => request<MasterResumeVersion>(`/api/master-resume/versions/${id}`),
-    latest: () => request<MasterResumeVersion>("/api/master-resume/latest"),
+  baseResume: {
+    list: () => request<BaseResumeVersion[]>("/api/base-resume/versions"),
+    get: (id: number) => request<BaseResumeVersion>(`/api/base-resume/versions/${id}`),
+    latest: () => request<BaseResumeVersion>("/api/base-resume/latest"),
     create: (data: { content: Record<string, unknown>; change_log?: string }) =>
-      request<MasterResumeVersion>("/api/master-resume/versions", {
+      request<BaseResumeVersion>("/api/base-resume/versions", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     update: (id: number, data: { content: Record<string, unknown>; change_log?: string }) =>
-      request<MasterResumeVersion>(`/api/master-resume/versions/${id}`, {
+      request<BaseResumeVersion>(`/api/base-resume/versions/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
       }),
     delete: (id: number) =>
-      request<void>(`/api/master-resume/versions/${id}`, { method: "DELETE" }),
-    importPdf: (file: File) => upload<ParsedResume>("/api/master-resume/import-pdf", "file", [file]),
+      request<void>(`/api/base-resume/versions/${id}`, { method: "DELETE" }),
+    importPdf: (file: File) => upload<ParsedResume>("/api/base-resume/import-pdf", "file", [file]),
     importText: (text: string) =>
-      request<ParsedResume>("/api/master-resume/import-text", {
+      request<ParsedResume>("/api/base-resume/import-text", {
         method: "POST",
         body: JSON.stringify({ text }),
       }),
-    importImage: (files: File[]) => upload<ParsedResume>("/api/master-resume/import-image", "files", files),
+    importImage: (files: File[]) => upload<ParsedResume>("/api/base-resume/import-image", "files", files),
   },
-  tailoredResume: {
-    list: () => request<TailoredResume[]>("/api/tailored-resume/"),
-    get: (id: number) => request<TailoredResume>(`/api/tailored-resume/${id}`),
+  jobResume: {
+    list: (baseVersionId?: number) => {
+      const qs = baseVersionId ? `?base_version_id=${baseVersionId}` : ""
+      return request<JobResume[]>(`/api/job-resume/${qs}`)
+    },
+    get: (id: number) => request<JobResume>(`/api/job-resume/${id}`),
     generate: (data: {
-      master_resume_version_id: number
+      base_resume_version_id: number
       raw_jd_text: string
     }) =>
-      request<TailoredResume>("/api/tailored-resume/generate", {
+      request<JobResume>("/api/job-resume/generate", {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    delete: (id: number) =>
+      request<void>(`/api/job-resume/${id}`, { method: "DELETE" }),
   },
   optimize: {
     content: (text: string, type: "summary" | "experience" | "project") =>

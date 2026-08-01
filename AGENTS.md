@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-JobFit 是一个基于大模型的智能简历定制平台：用户一次性维护一份全量的「主履历库（Master Resume）」，申请新岗位时粘贴岗位 JD，系统自动按 STAR 原则重构出针对该岗位的高匹配简历，支持在线预览与一键导出 PDF。
+JobFit 是一个基于大模型的智能简历定制平台：用户一次性维护一份全量的「基础简历库（Base Resume）」，申请新岗位时粘贴岗位 JD，系统自动按 STAR 原则重构出针对该岗位的高匹配岗位简历，支持在线预览与一键导出 PDF。
 
 ## 需求开发流程（强制，必须严格遵守）
 
@@ -32,16 +32,16 @@ JobFit/
 │   ├── app/
 │   │   ├── main.py           # 应用入口，CORS(仅 localhost:3000)，挂载路由
 │   │   ├── database.py       # SQLite 引擎 + get_db 依赖
-│   │   ├── models.py         # SQLModel 表：master_resume_versions / tailored_resumes / llm_configs
+│   │   ├── models.py         # SQLModel 表：base_resume_versions / job_resumes / llm_configs
 │   │   ├── schemas.py        # Pydantic 请求/响应模型
 │   │   ├── llm_engine.py     # 获取激活 LLM 客户端 + 简历生成 Prompt
-│   │   └── routes/           # master_resume.py / tailored_resume.py / optimize.py / llm_config.py
+│   │   └── routes/           # base_resume.py / job_resume.py / optimize.py / llm_config.py
 │   ├── requirements.txt
 │   ├── .env.example          # DATABASE_URL=sqlite:///./jobfit.db
 │   └── venv/                 # 虚拟环境（勿提交）
 ├── frontend/                 # Next.js 前端
-│   ├── app/                  # page.tsx(首页) / master-resume / tailored-resume / settings
-│   ├── components/           # MasterResumeForm / TailoredResumeForm / ResumePreview / PDFExporter / VersionHistory / LLMConfigForm / Navigation
+│   ├── app/                  # page.tsx(首页) / base-resume / job-resume / settings
+│   ├── components/           # BaseResumeForm / JobResumeForm / ResumePreview / PDFExporter / VersionHistory / LLMConfigForm / Navigation
 │   ├── lib/api.ts            # 全部后端 API 封装（前端唯一请求入口）
 │   └── .env.local.example    # NEXT_PUBLIC_API_URL=http://localhost:8000
 ├── docs/superpowers/specs/   # 设计文档（需求开发流程的产物，见上方"需求开发流程"）
@@ -66,21 +66,21 @@ JobFit/
 
 ## 数据模型
 
-主履历内容以 JSON 存储于 `master_resume_versions.content`，包含 14 个模块字段（字段结构见 `docs/superpowers/specs/2026-07-29-resume-enhancement-design.md`）：
+基础简历内容以 JSON 存储于 `base_resume_versions.content`，包含 14 个模块字段（字段结构见 `docs/superpowers/specs/2026-07-29-resume-enhancement-design.md`）：
 
 - 基本信息：`avatar`(Base64 data URL, <2MB)、`name`、`title`、`email`、`phone`、`location`、`website`、`linkedin`、`github`
 - `summary` 个人总结
 - `skillCategories`（分类技能）、`experience`（工作经历，含 techStack）、`projects`（项目经历）、`education`（教育背景）
 - 折叠面板：`certifications`、`languages`、`awards`、`publications`
 
-版本控制：每次保存主履历自动生成新版本号（递增），全量 JSON 存储，不覆盖旧数据。
+版本控制：每次保存基础简历自动生成新版本号（递增），全量 JSON 存储，不覆盖旧数据。
 
 ## API 概览
 
 | 模块 | 端点 |
 | --- | --- |
-| Master Resume | `GET/POST /api/master-resume/versions`，`GET/PUT/DELETE /api/master-resume/versions/{id}`（PUT 保存当前版本，DELETE 删除版本），`GET /api/master-resume/latest`，`POST /api/master-resume/import-pdf`，`POST /api/master-resume/import-text`，`POST /api/master-resume/import-image`（导入解析：PDF/文本/截图 OCR，详见 `docs/superpowers/specs/2026-08-01-pdf-import-design.md` 与 `2026-08-01-screenshot-ocr-design.md`） |
-| Tailored Resume | `GET /api/tailored-resume/`，`GET /api/tailored-resume/{id}`，`POST /api/tailored-resume/generate` |
+| Base Resume | `GET/POST /api/base-resume/versions`，`GET/PUT/DELETE /api/base-resume/versions/{id}`（PUT 保存当前版本，DELETE 软删除该版本并级联软删其岗位简历），`GET /api/base-resume/latest`，`POST /api/base-resume/import-pdf`，`POST /api/base-resume/import-text`，`POST /api/base-resume/import-image`（导入解析：PDF/文本/截图 OCR，详见 `docs/superpowers/specs/2026-08-01-pdf-import-design.md` 与 `2026-08-01-screenshot-ocr-design.md`） |
+| Job Resume | `GET /api/job-resume/?base_version_id=X`（可选版本过滤），`GET /api/job-resume/{id}`，`POST /api/job-resume/generate`，`DELETE /api/job-resume/{id}`（软删除） |
 | Optimize | `POST /api/optimize/content`（type: summary / experience / project，单文本 AI 润色） |
 | OCR | `POST /api/ocr/extract`（多图截图 → 纯文本，不调 LLM，用于岗位 JD 输入） |
 | LLM Config | `GET/POST /api/llm-config/`，`GET /api/llm-config/active`，`PUT/DELETE /api/llm-config/{id}` |
@@ -89,7 +89,7 @@ JobFit/
 
 - 后端新增 LLM 调用时：复用 `llm_engine.get_active_llm_client(db)`，Prompt 编排用 `ChatPromptTemplate`，输出解析用 `StrOutputParser`
 - 前端请求统一走 `lib/api.ts` 的 `api` 对象，不直接 `fetch`
-- 主履历 JSON 结构变更需同步更新：`MasterResumeForm.tsx`、`ResumePreview.tsx`、`PDFExporter.tsx`、`llm_engine.py` 中的 Prompt
+- 基础简历 JSON 结构变更需同步更新：`BaseResumeForm.tsx`、`ResumePreview.tsx`、`PDFExporter.tsx`、`llm_engine.py` 中的 Prompt
 - 数据库表由 SQLModel 模型定义，`init_db()` 在应用启动时自动建表；修改模型不自动迁移
 - 环境变量：后端 `.env`（DATABASE_URL），前端 `.env.local`（NEXT_PUBLIC_API_URL），示例见 `.example` 文件
 - 组件为 `"use client"` 客户端组件（交互型页面）

@@ -2,15 +2,15 @@
 
 import { useRef, useState } from "react"
 import { api } from "@/lib/api"
-import type { MasterResumeVersion } from "@/lib/api"
+import type { BaseResumeVersion } from "@/lib/api"
 
 interface Props {
-  masterVersions: MasterResumeVersion[]
-  onGenerate: (data: { master_resume_version_id: number; raw_jd_text: string }) => Promise<void>
+  baseVersions: BaseResumeVersion[]
+  onGenerate: (data: { base_resume_version_id: number; raw_jd_text: string }) => Promise<void>
   generating: boolean
 }
 
-export function TailoredResumeForm({ masterVersions, onGenerate, generating }: Props) {
+export function JobResumeForm({ baseVersions, onGenerate, generating }: Props) {
   const [jdText, setJdText] = useState("")
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null)
   const [ocrOpen, setOcrOpen] = useState(false)
@@ -22,7 +22,7 @@ export function TailoredResumeForm({ masterVersions, onGenerate, generating }: P
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedVersionId || !jdText.trim()) return
-    await onGenerate({ master_resume_version_id: selectedVersionId, raw_jd_text: jdText })
+    await onGenerate({ base_resume_version_id: selectedVersionId, raw_jd_text: jdText })
   }
 
   const closeOcr = () => {
@@ -75,15 +75,15 @@ export function TailoredResumeForm({ masterVersions, onGenerate, generating }: P
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="form-label">主履历版本</label>
+        <label className="form-label">基础简历版本</label>
         <select
           value={selectedVersionId ?? ""}
           onChange={(e) => setSelectedVersionId(Number(e.target.value))}
           className="form-input"
           required
         >
-          <option value="">请选择主履历版本</option>
-          {masterVersions.map((v) => (
+          <option value="">请选择基础简历版本</option>
+          {baseVersions.map((v) => (
             <option key={v.id} value={v.id}>v{v.version} — {new Date(v.created_at).toLocaleDateString("zh-CN")}</option>
           ))}
         </select>
@@ -104,7 +104,7 @@ export function TailoredResumeForm({ masterVersions, onGenerate, generating }: P
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
             AI 生成中...
           </span>
-        ) : "生成定制简历"}
+        ) : "生成岗位简历"}
       </button>
 
       {ocrOpen && (

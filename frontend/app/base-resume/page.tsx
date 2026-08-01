@@ -1,21 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { api, type MasterResumeVersion } from "@/lib/api"
-import { MasterResumeForm } from "@/components/MasterResumeForm"
+import { api, type BaseResumeVersion } from "@/lib/api"
+import { BaseResumeForm } from "@/components/BaseResumeForm"
 import { VersionHistory } from "@/components/VersionHistory"
 import { ResumeImportModal } from "@/components/ResumeImportModal"
 
-export default function MasterResumePage() {
-  const [versions, setVersions] = useState<MasterResumeVersion[]>([])
-  const [selectedVersion, setSelectedVersion] = useState<MasterResumeVersion | null>(null)
+export default function BaseResumePage() {
+  const [versions, setVersions] = useState<BaseResumeVersion[]>([])
+  const [selectedVersion, setSelectedVersion] = useState<BaseResumeVersion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [importOpen, setImportOpen] = useState(false)
 
   const loadVersions = () => {
     setLoading(true)
-    api.masterResume
+    api.baseResume
       .list()
       .then((data) => {
         setVersions(data)
@@ -33,17 +33,17 @@ export default function MasterResumePage() {
     mode: "update" | "create"
   ) => {
     if (mode === "update" && selectedVersion) {
-      await api.masterResume.update(selectedVersion.id, { content, change_log: changeLog })
+      await api.baseResume.update(selectedVersion.id, { content, change_log: changeLog })
     } else {
-      await api.masterResume.create({ content, change_log: changeLog })
+      await api.baseResume.create({ content, change_log: changeLog })
     }
     loadVersions()
   }
 
-  const handleDeleteVersion = async (v: MasterResumeVersion) => {
-    if (!confirm(`确定删除 v${v.version} 吗？此操作不可恢复。`)) return
+  const handleDeleteVersion = async (v: BaseResumeVersion) => {
+    if (!confirm(`确定删除 v${v.version} 吗？该版本下的岗位简历将一并删除。此操作不可恢复。`)) return
     try {
-      await api.masterResume.delete(v.id)
+      await api.baseResume.delete(v.id)
       const rest = versions.filter((x) => x.id !== v.id)
       setVersions(rest)
       if (selectedVersion?.id === v.id) {
@@ -57,7 +57,7 @@ export default function MasterResumePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">主履历管理</h1>
+        <h1 className="text-2xl font-bold text-slate-800">基础简历管理</h1>
         <button type="button" className="btn-primary text-sm" onClick={() => setImportOpen(true)}>导入简历</button>
       </div>
 
@@ -86,11 +86,11 @@ export default function MasterResumePage() {
           <div className="card">
             <div className="card-header">
               <h2 className="font-semibold text-slate-800">
-                {selectedVersion ? `编辑履历 (v${selectedVersion.version})` : "新建主履历"}
+                {selectedVersion ? `编辑简历 (v${selectedVersion.version})` : "新建基础简历"}
               </h2>
             </div>
             <div className="card-body">
-              <MasterResumeForm
+              <BaseResumeForm
                 key={selectedVersion?.id ?? "new"}
                 initialContent={selectedVersion?.content ?? {}}
                 currentVersionId={selectedVersion?.id ?? null}

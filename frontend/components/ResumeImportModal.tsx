@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { api, type ParsedResume } from "@/lib/api"
-import { MasterResumeForm } from "@/components/MasterResumeForm"
+import { BaseResumeForm } from "@/components/BaseResumeForm"
 
 interface Props {
   open: boolean
@@ -84,10 +84,10 @@ export function ResumeImportModal({ open, onClose, onSave }: Props) {
     try {
       const result =
         tab === "pdf"
-          ? await api.masterResume.importPdf(file!)
+          ? await api.baseResume.importPdf(file!)
           : tab === "image"
-            ? await api.masterResume.importImage(images)
-            : await api.masterResume.importText(text)
+            ? await api.baseResume.importImage(images)
+            : await api.baseResume.importText(text)
       setParsed(result)
     } catch (e) {
       setError(e instanceof Error ? e.message : "解析失败")
@@ -217,7 +217,7 @@ export function ResumeImportModal({ open, onClose, onSave }: Props) {
         ) : (
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <p className="text-sm text-slate-500 mb-4">已解析完成，请核对并修改以下内容，确认后保存为新版本。</p>
-            <MasterResumeForm
+            <BaseResumeForm
               initialContent={parsed as unknown as Record<string, unknown>}
               onSave={handleSaveVersion}
             />

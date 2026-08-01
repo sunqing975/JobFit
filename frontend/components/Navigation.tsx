@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation"
 
 const navItems = [
   { href: "/", label: "首页", icon: "🏠" },
-  { href: "/master-resume", label: "主履历", icon: "📋" },
-  { href: "/tailored-resume", label: "定制简历", icon: "🎯" },
+  { href: "/base-resume", label: "基础简历", icon: "📋" },
+  { href: "/job-resume", label: "岗位简历", icon: "🎯" },
   { href: "/settings", label: "模型配置", icon: "⚙️" },
 ]
 

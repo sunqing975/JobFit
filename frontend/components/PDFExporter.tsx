@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import type { TailoredResume } from "@/lib/api"
+import type { JobResume } from "@/lib/api"
 
 interface Props {
-  resume: TailoredResume
+  resume: JobResume
 }
 
 interface ExpItem { company: string; location?: string; role: string; period: string; bullets: string[]; techStack?: string[] }
