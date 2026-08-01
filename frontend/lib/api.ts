@@ -53,7 +53,6 @@ export interface LLMConfig {
   api_base: string
   api_key: string
   model_name: string
-  temperature: number
   is_active: boolean
   updated_at: string
 }
@@ -121,11 +120,71 @@ export const api = {
       request<void>(`/api/job-resume/${id}`, { method: "DELETE" }),
   },
   optimize: {
-    content: (text: string, type: "summary" | "experience" | "project") =>
-      request<{ optimized: string }>("/api/optimize/content", {
-        method: "POST",
-        body: JSON.stringify({ text, type }),
-      }),
+    streamContent: (
+      text: string,
+      type: "summary" | "experience" | "project",
+      handlers: {
+        onDelta: (s: string) => void
+        onDone: () => void
+        onError: (msg: string) => void
+      }
+    ): AbortController => {
+      const controller = new AbortController()
+      ;(async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/optimize/content`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, type }),
+            signal: controller.signal,
+          })
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: res.statusText }))
+            handlers.onError(err.detail || "请求失败")
+            return
+          }
+          if (!res.body) {
+            handlers.onError("浏览器不支持流式响应")
+            return
+          }
+          const reader = res.body.getReader()
+          const decoder = new TextDecoder("utf-8")
+          let buffer = ""
+          const handleFrame = (frame: string) => {
+            const line = frame.split("\n").find((l) => l.startsWith("data: "))
+            if (!line) return
+            try {
+              const payload = JSON.parse(line.slice(6))
+              if (payload.type === "delta" && typeof payload.content === "string") {
+                handlers.onDelta(payload.content)
+              } else if (payload.type === "done") {
+                handlers.onDone()
+              } else if (payload.type === "error") {
+                handlers.onError(payload.message || "优化失败")
+              }
+            } catch {
+              // 忽略无法解析的帧
+            }
+          }
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            let idx
+            while ((idx = buffer.indexOf("\n\n")) !== -1) {
+              handleFrame(buffer.slice(0, idx))
+              buffer = buffer.slice(idx + 2)
+            }
+          }
+          buffer += decoder.decode()
+          if (buffer.trim()) handleFrame(buffer)
+        } catch (e) {
+          if ((e as Error).name === "AbortError") handlers.onError("已停止")
+          else handlers.onError(e instanceof Error ? e.message : "优化失败")
+        }
+      })()
+      return controller
+    },
   },
   ocr: {
     extract: (files: File[]) => upload<{ text: string }>("/api/ocr/extract", "files", files),
@@ -138,7 +197,6 @@ export const api = {
       api_base: string
       api_key: string
       model_name: string
-      temperature: number
     }) =>
       request<LLMConfig>("/api/llm-config/", {
         method: "POST",

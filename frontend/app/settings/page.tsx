@@ -16,7 +16,7 @@ export default function SettingsPage() {
 
   useEffect(loadConfigs, [])
 
-  const handleCreate = async (data: { provider_name: string; api_base: string; api_key: string; model_name: string; temperature: number }) => {
+  const handleCreate = async (data: { provider_name: string; api_base: string; api_key: string; model_name: string }) => {
     await api.llmConfig.create(data)
     loadConfigs()
   }
@@ -64,7 +64,6 @@ export default function SettingsPage() {
                         <span className="mx-2">·</span>
                         <span className="text-slate-400 text-xs">{config.api_base}</span>
                       </div>
-                      <div className="text-xs text-slate-400 mt-0.5">Temperature: {config.temperature}</div>
                     </div>
                     <div className="flex gap-2">
                       {!config.is_active && (

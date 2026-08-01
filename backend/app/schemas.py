@@ -39,7 +39,6 @@ class LLMConfigCreate(BaseModel):
     api_base: str = "https://api.openai.com/v1"
     api_key: str = ""
     model_name: str = "gpt-4o-mini"
-    temperature: float = 0.3
 
 
 class LLMConfigUpdate(BaseModel):
@@ -47,7 +46,6 @@ class LLMConfigUpdate(BaseModel):
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     model_name: Optional[str] = None
-    temperature: Optional[float] = None
     is_active: Optional[bool] = None
 
 
@@ -57,7 +55,6 @@ class LLMConfigResponse(BaseModel):
     api_base: str
     api_key: str
     model_name: str
-    temperature: float
     is_active: bool
     updated_at: datetime
 

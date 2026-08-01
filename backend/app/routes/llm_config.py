@@ -33,7 +33,6 @@ def create_config(data: LLMConfigCreate, db: Session = Depends(get_db)):
         api_base=data.api_base,
         api_key=data.api_key,
         model_name=data.model_name,
-        temperature=data.temperature,
         is_active=not has_active,
     )
     db.add(config)

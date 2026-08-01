@@ -1,4 +1,7 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlmodel import Session
 from langchain_core.prompts import ChatPromptTemplate
@@ -30,11 +33,11 @@ class OptimizeRequest(BaseModel):
     type: str = "summary"
 
 
-class OptimizeResponse(BaseModel):
-    optimized: str
+def _sse(payload: dict) -> str:
+    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
-@router.post("/content", response_model=OptimizeResponse)
+@router.post("/content")
 def optimize_content(data: OptimizeRequest, db: Session = Depends(get_db)):
     if not data.text.strip():
         raise HTTPException(status_code=400, detail="请输入需要优化的文本")
@@ -43,7 +46,25 @@ def optimize_content(data: OptimizeRequest, db: Session = Depends(get_db)):
     if not prompt:
         raise HTTPException(status_code=400, detail=f"不支持的优化类型: {data.type}")
 
-    llm = get_active_llm_client(db)
-    chain = prompt | llm | StrOutputParser()
-    result = chain.invoke({"text": data.text})
-    return OptimizeResponse(optimized=result.strip())
+    async def event_stream():
+        try:
+            llm = get_active_llm_client(db)
+        except ValueError as e:
+            yield _sse({"type": "error", "message": str(e)})
+            return
+
+        chain = prompt | llm | StrOutputParser()
+        parts = []
+        try:
+            async for chunk in chain.astream({"text": data.text}):
+                if chunk:
+                    parts.append(chunk)
+                    yield _sse({"type": "delta", "content": chunk})
+            if not "".join(parts).strip():
+                yield _sse({"type": "error", "message": "AI 优化结果为空，请重试"})
+            else:
+                yield _sse({"type": "done"})
+        except Exception as e:
+            yield _sse({"type": "error", "message": f"AI 优化失败: {e}"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

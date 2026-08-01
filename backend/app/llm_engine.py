@@ -9,6 +9,8 @@ from pydantic import ValidationError
 from .models import LLMConfig
 from .schemas import ParsedResume
 
+LLM_TEMPERATURE = 0.3
+
 
 def get_active_llm_client(db: Session) -> ChatOpenAI:
     config = db.exec(select(LLMConfig).where(LLMConfig.is_active == True)).first()
@@ -19,7 +21,7 @@ def get_active_llm_client(db: Session) -> ChatOpenAI:
         model=config.model_name,
         api_key=config.api_key,
         base_url=config.api_base,
-        temperature=config.temperature,
+        temperature=LLM_TEMPERATURE,
     )
 
 

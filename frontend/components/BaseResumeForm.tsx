@@ -59,6 +59,7 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
   const [changeLog, setChangeLog] = useState("")
   const [showMore, setShowMore] = useState(false)
   const [optimizing, setOptimizing] = useState<string | false>(false)
+  const optimizeCtrlRef = useRef<AbortController | null>(null)
 
   const [avatar, setAvatar] = useState<string>((initialContent.avatar as string) || "")
   const [name, setName] = useState((initialContent.name as string) || "")
@@ -155,25 +156,27 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
           <button
             type="button"
             className="btn-ghost text-sm"
-            disabled={optimizing === "summary" || !summary.trim()}
-            onClick={async () => {
-              setOptimizing("summary")
-              try {
-                const res = await api.optimize.content(summary, "summary")
-                setSummary(res.optimized)
-              } catch (e) {
-                alert(e instanceof Error ? e.message : "优化失败")
-              } finally {
-                setOptimizing(false)
+            disabled={(optimizing && optimizing !== "summary") || !summary.trim()}
+            onClick={() => {
+              if (optimizing === "summary") {
+                optimizeCtrlRef.current?.abort()
+                return
               }
+              const backup = summary
+              setSummary("")
+              setOptimizing("summary")
+              optimizeCtrlRef.current = api.optimize.streamContent(backup, "summary", {
+                onDelta: (s) => setSummary((prev) => prev + s),
+                onDone: () => setOptimizing(false),
+                onError: (msg) => {
+                  setSummary(backup)
+                  setOptimizing(false)
+                  if (msg !== "已停止") alert(msg)
+                },
+              })
             }}
           >
-            {optimizing === "summary" ? (
-              <span className="flex items-center gap-1">
-                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                AI 优化中...
-              </span>
-            ) : "AI 优化"}
+            {optimizing === "summary" ? "停止" : "AI 优化"}
           </button>
         </div>
         <div className="card-body">
@@ -234,7 +237,27 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="form-label !mb-0">工作描述（每条一行）</label>
-                  <button type="button" className="btn-ghost text-xs" disabled={optimizing === "exp" + i || !exp.bullets.join("").trim()} onClick={async () => { setOptimizing("exp" + i); try { const res = await api.optimize.content(exp.bullets.filter(Boolean).join("\n"), "experience"); const c = [...experience]; c[i].bullets = res.optimized.split("\n").filter(Boolean); setExperience(c) } catch (e) { alert(e instanceof Error ? e.message : "优化失败") } finally { setOptimizing(false) } }}>{optimizing === "exp" + i ? "优化中..." : "AI 优化"}</button>
+                  <button type="button" className="btn-ghost text-xs" disabled={(optimizing && optimizing !== "exp" + i) || !exp.bullets.join("").trim()} onClick={() => {
+                    if (optimizing === "exp" + i) { optimizeCtrlRef.current?.abort(); return }
+                    const backup = [...experience]
+                    const c = [...experience]
+                    c[i].bullets = [""]
+                    setExperience(c)
+                    setOptimizing("exp" + i)
+                    optimizeCtrlRef.current = api.optimize.streamContent(backup[i].bullets.filter(Boolean).join("\n"), "experience", {
+                      onDelta: (s) => setExperience((prev) => { const next = [...prev]; next[i] = { ...next[i], bullets: s.split("\n") }; return next }),
+                      onDone: () => {
+                        setExperience((prev) => {
+                          const next = [...prev]
+                          const bullets = next[i].bullets.filter(Boolean)
+                          next[i] = { ...next[i], bullets: bullets.length ? bullets : [""] }
+                          return next
+                        })
+                        setOptimizing(false)
+                      },
+                      onError: (msg) => { setExperience(backup); setOptimizing(false); if (msg !== "已停止") alert(msg) },
+                    })
+                  }}>{optimizing === "exp" + i ? "停止" : "AI 优化"}</button>
                 </div>
                 <textarea className="form-textarea" rows={3} value={exp.bullets.join("\n")} onChange={e => { const c = [...experience]; c[i].bullets = e.target.value.split("\n").filter(Boolean); if (c[i].bullets.length === 0) c[i].bullets = [""]; setExperience(c) }} placeholder="使用 STAR 原则描述工作成果..." />
               </div>
@@ -274,7 +297,27 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="form-label !mb-0">项目亮点（每条一行）</label>
-                  <button type="button" className="btn-ghost text-xs" disabled={optimizing === "proj" + i || !proj.bullets.join("").trim()} onClick={async () => { setOptimizing("proj" + i); try { const res = await api.optimize.content(proj.bullets.filter(Boolean).join("\n"), "project"); const c = [...projects]; c[i].bullets = res.optimized.split("\n").filter(Boolean); setProjects(c) } catch (e) { alert(e instanceof Error ? e.message : "优化失败") } finally { setOptimizing(false) } }}>{optimizing === "proj" + i ? "优化中..." : "AI 优化"}</button>
+                  <button type="button" className="btn-ghost text-xs" disabled={(optimizing && optimizing !== "proj" + i) || !proj.bullets.join("").trim()} onClick={() => {
+                    if (optimizing === "proj" + i) { optimizeCtrlRef.current?.abort(); return }
+                    const backup = [...projects]
+                    const c = [...projects]
+                    c[i].bullets = [""]
+                    setProjects(c)
+                    setOptimizing("proj" + i)
+                    optimizeCtrlRef.current = api.optimize.streamContent(backup[i].bullets.filter(Boolean).join("\n"), "project", {
+                      onDelta: (s) => setProjects((prev) => { const next = [...prev]; next[i] = { ...next[i], bullets: s.split("\n") }; return next }),
+                      onDone: () => {
+                        setProjects((prev) => {
+                          const next = [...prev]
+                          const bullets = next[i].bullets.filter(Boolean)
+                          next[i] = { ...next[i], bullets: bullets.length ? bullets : [""] }
+                          return next
+                        })
+                        setOptimizing(false)
+                      },
+                      onError: (msg) => { setProjects(backup); setOptimizing(false); if (msg !== "已停止") alert(msg) },
+                    })
+                  }}>{optimizing === "proj" + i ? "停止" : "AI 优化"}</button>
                 </div>
                 <textarea className="form-textarea" rows={3} value={proj.bullets.join("\n")} onChange={e => { const c = [...projects]; c[i].bullets = e.target.value.split("\n").filter(Boolean); if (c[i].bullets.length === 0) c[i].bullets = [""]; setProjects(c) }} />
               </div>

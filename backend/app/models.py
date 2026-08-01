@@ -34,6 +34,5 @@ class LLMConfig(SQLModel, table=True):
     api_base: str = Field(default="https://api.openai.com/v1")
     api_key: str = Field(default="")
     model_name: str = Field(default="gpt-4o-mini")
-    temperature: float = Field(default=0.3)
     is_active: bool = Field(default=True, index=True)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
