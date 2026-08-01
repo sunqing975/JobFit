@@ -156,7 +156,7 @@ export function ResumeImportModal({ open, onClose, onSave }: Props) {
                     <span className="text-sm text-slate-400">点击选择 PDF 文件（不超过 10MB）</span>
                   )}
                 </button>
-                <p className="text-xs text-slate-400 mt-2">支持电子版 PDF；扫描件暂不支持（OCR 二期）</p>
+                <p className="text-xs text-slate-400 mt-2">支持电子版 PDF；扫描版 PDF 将自动识别（最多 20 页）</p>
               </div>
             ) : tab === "image" ? (
               <div onPaste={handlePaste}>

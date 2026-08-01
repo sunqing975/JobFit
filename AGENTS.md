@@ -79,7 +79,7 @@ JobFit/
 
 | 模块 | 端点 |
 | --- | --- |
-| Base Resume | `GET/POST /api/base-resume/versions`，`GET/PUT/DELETE /api/base-resume/versions/{id}`（PUT 保存当前版本，DELETE 软删除该版本并级联软删其岗位简历），`GET /api/base-resume/latest`，`POST /api/base-resume/import-pdf`，`POST /api/base-resume/import-text`，`POST /api/base-resume/import-image`（导入解析：PDF/文本/截图 OCR，详见 `docs/superpowers/specs/2026-08-01-pdf-import-design.md` 与 `2026-08-01-screenshot-ocr-design.md`） |
+| Base Resume | `GET/POST /api/base-resume/versions`，`GET/PUT/DELETE /api/base-resume/versions/{id}`（PUT 保存当前版本，DELETE 软删除该版本并级联软删其岗位简历），`GET /api/base-resume/latest`，`POST /api/base-resume/import-pdf`（文本型快速通道，扫描版自动 PyMuPDF 渲染 + RapidOCR，最多 20 页），`POST /api/base-resume/import-text`，`POST /api/base-resume/import-image`（导入解析详见 `docs/superpowers/specs/2026-08-01-pdf-import-design.md`、`2026-08-01-screenshot-ocr-design.md` 与 `2026-08-01-scanned-pdf-ocr-design.md`） |
 | Job Resume | `GET /api/job-resume/?base_version_id=X`（可选版本过滤），`GET /api/job-resume/{id}`，`POST /api/job-resume/generate`，`DELETE /api/job-resume/{id}`（软删除） |
 | Optimize | `POST /api/optimize/content`（type: summary / experience / project，单文本 AI 润色） |
 | OCR | `POST /api/ocr/extract`（多图截图 → 纯文本，不调 LLM，用于岗位 JD 输入） |
