@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
@@ -7,7 +9,9 @@ from langchain_core.output_parsers import StrOutputParser
 from ..database import get_db
 from ..models import BaseResumeVersion, JobResume
 from ..schemas import JobResumeCreate, JobResumeResponse
-from ..llm_engine import get_active_llm_client, RESUME_GENERATION_PROMPT
+from ..llm_engine import _extract_json, get_active_llm_client, RESUME_GENERATION_PROMPT
+
+logger = logging.getLogger("jobfit")
 
 router = APIRouter(prefix="/api/job-resume", tags=["Job Resume"])
 
@@ -56,20 +60,40 @@ def generate_job_resume(data: JobResumeCreate, db: Session = Depends(get_db)):
 
     chain = RESUME_GENERATION_PROMPT | llm | StrOutputParser()
 
+    prompt_content = {
+        k: v for k, v in base_resume.content.items() if k != "avatar"
+    }
+    started = time.monotonic()
     result = chain.invoke(
         {
-            "master_json": json.dumps(base_resume.content, ensure_ascii=False, indent=2),
+            "master_json": json.dumps(prompt_content, ensure_ascii=False, indent=2),
             "jd_text": data.raw_jd_text,
         }
     )
+    logger.info(
+        "岗位简历生成：LLM 用时 %.1fs，输出 %d 字符（输入主简历 %d 字段）",
+        time.monotonic() - started,
+        len(result),
+        len(prompt_content),
+    )
 
     try:
-        generated_content = json.loads(result)
-    except json.JSONDecodeError:
+        generated_content = _extract_json(result)
+        logger.info(
+            "岗位简历生成：解析成功，共 %d 个字段",
+            len(generated_content),
+        )
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.warning(
+            "岗位简历生成：LLM 输出解析失败（%s），输出长度 %d，输出前缀：%r",
+            e,
+            len(result),
+            result[:200],
+        )
         generated_content = {"raw_output": result}
 
     avatar = base_resume.content.get("avatar")
-    if avatar and not generated_content.get("avatar"):
+    if avatar:
         generated_content["avatar"] = avatar
 
     record = JobResume(
