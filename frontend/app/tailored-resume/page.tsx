@@ -32,6 +32,11 @@ export default function TailoredResumePage() {
     }
   }
 
+  const getVersionLabel = (r: TailoredResume) => {
+    const mv = masterVersions.find((v) => v.id === r.master_resume_version_id)
+    return mv ? `v${mv.version}` : "版本已删除"
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-800">生成定制简历</h1>
@@ -70,7 +75,10 @@ export default function TailoredResumePage() {
                       }`}
                     >
                       <div className="font-medium text-slate-800 truncate">{firstLine || "未知职位"}</div>
-                      <div className="text-slate-400 text-xs mt-1">{new Date(r.created_at).toLocaleDateString("zh-CN")}</div>
+                      <div className="text-xs mt-1">
+                        <span className="text-blue-600">主履历 {getVersionLabel(r)}</span>
+                        <span className="text-slate-400"> · {new Date(r.created_at).toLocaleDateString("zh-CN")}</span>
+                      </div>
                     </button>
                   )
                 })}
@@ -85,9 +93,15 @@ export default function TailoredResumePage() {
               <div className="card-header">
                 <div>
                   <h2 className="font-semibold text-slate-800">简历预览</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">使用模型: {selectedResume.model_used}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">主履历 {getVersionLabel(selectedResume)} · 模型 {selectedResume.model_used}</p>
                 </div>
                 <PDFExporter resume={selectedResume} />
+              </div>
+              <div className="border-b border-slate-200 px-6 py-3 text-xs text-slate-500">
+                <details>
+                  <summary className="cursor-pointer text-slate-400 hover:text-slate-600">查看完整岗位 JD</summary>
+                  <pre className="mt-2 p-3 bg-slate-50 rounded-lg text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">{selectedResume.raw_jd_text}</pre>
+                </details>
               </div>
               <div className="bg-slate-100 p-6 overflow-auto max-h-[calc(100vh-120px)]">
                 <ResumePreview content={selectedResume.generated_content} />

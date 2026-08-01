@@ -5,7 +5,12 @@ import { api } from "@/lib/api"
 
 interface Props {
   initialContent: Record<string, unknown>
-  onSave: (content: Record<string, unknown>, changeLog?: string) => Promise<void>
+  currentVersionId?: number | null
+  onSave: (
+    content: Record<string, unknown>,
+    changeLog: string | undefined,
+    mode: "update" | "create"
+  ) => Promise<void>
 }
 
 interface ExperienceItem {
@@ -48,7 +53,7 @@ const emptyLang = (): LanguageItem => ({ name: "", proficiency: "流利" })
 const emptyAward = (): AwardItem => ({ name: "", issuer: "", date: "" })
 const emptyPub = (): PublicationItem => ({ title: "", publisher: "", date: "" })
 
-export function MasterResumeForm({ initialContent, onSave }: Props) {
+export function MasterResumeForm({ initialContent, currentVersionId, onSave }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
   const [changeLog, setChangeLog] = useState("")
@@ -101,10 +106,10 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
     publications: publications.filter(p => p.title.trim()) || undefined,
   })
 
-  const handleSave = async () => {
+  const handleSave = async (mode: "update" | "create") => {
     setSaving(true)
     try {
-      await onSave(buildContent(), changeLog || undefined)
+      await onSave(buildContent(), changeLog || undefined, mode)
       setChangeLog("")
     } finally { setSaving(false) }
   }
@@ -367,7 +372,14 @@ export function MasterResumeForm({ initialContent, onSave }: Props) {
       {/* 保存 */}
       <div className="flex items-center gap-4">
         <input className="form-input flex-1" placeholder="变更说明（可选，如：新增项目经历）" value={changeLog} onChange={e => setChangeLog(e.target.value)} />
-        <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? "保存中..." : "保存新版本"}</button>
+        {currentVersionId ? (
+          <>
+            <button type="button" className="btn-ghost" onClick={() => handleSave("create")} disabled={saving}>{saving ? "保存中..." : "另存为新版本"}</button>
+            <button type="button" className="btn-primary" onClick={() => handleSave("update")} disabled={saving}>{saving ? "保存中..." : "保存当前版本"}</button>
+          </>
+        ) : (
+          <button type="button" className="btn-primary" onClick={() => handleSave("create")} disabled={saving}>{saving ? "保存中..." : "保存"}</button>
+        )}
       </div>
     </div>
   )

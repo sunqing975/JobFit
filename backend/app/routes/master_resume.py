@@ -50,3 +50,28 @@ def create_version(data: MasterResumeCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(version)
     return version
+
+
+@router.put("/versions/{version_id}", response_model=MasterResumeResponse)
+def update_version(version_id: int, data: MasterResumeCreate, db: Session = Depends(get_db)):
+    version = db.get(MasterResumeVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="版本不存在")
+
+    version.content = data.content
+    version.change_log = data.change_log
+    db.add(version)
+    db.commit()
+    db.refresh(version)
+    return version
+
+
+@router.delete("/versions/{version_id}")
+def delete_version(version_id: int, db: Session = Depends(get_db)):
+    version = db.get(MasterResumeVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="版本不存在")
+
+    db.delete(version)
+    db.commit()
+    return {"status": "ok"}

@@ -4,12 +4,14 @@ import { useEffect, useState } from "react"
 import { api, type MasterResumeVersion } from "@/lib/api"
 import { MasterResumeForm } from "@/components/MasterResumeForm"
 import { VersionHistory } from "@/components/VersionHistory"
+import { ResumeImportModal } from "@/components/ResumeImportModal"
 
 export default function MasterResumePage() {
   const [versions, setVersions] = useState<MasterResumeVersion[]>([])
   const [selectedVersion, setSelectedVersion] = useState<MasterResumeVersion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [importOpen, setImportOpen] = useState(false)
 
   const loadVersions = () => {
     setLoading(true)
@@ -25,14 +27,39 @@ export default function MasterResumePage() {
 
   useEffect(loadVersions, [])
 
-  const handleSave = async (content: Record<string, unknown>, changeLog?: string) => {
-    await api.masterResume.create({ content, change_log: changeLog })
+  const handleSave = async (
+    content: Record<string, unknown>,
+    changeLog: string | undefined,
+    mode: "update" | "create"
+  ) => {
+    if (mode === "update" && selectedVersion) {
+      await api.masterResume.update(selectedVersion.id, { content, change_log: changeLog })
+    } else {
+      await api.masterResume.create({ content, change_log: changeLog })
+    }
     loadVersions()
+  }
+
+  const handleDeleteVersion = async (v: MasterResumeVersion) => {
+    if (!confirm(`确定删除 v${v.version} 吗？此操作不可恢复。`)) return
+    try {
+      await api.masterResume.delete(v.id)
+      const rest = versions.filter((x) => x.id !== v.id)
+      setVersions(rest)
+      if (selectedVersion?.id === v.id) {
+        setSelectedVersion(rest[0] ?? null)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "删除失败")
+    }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">主履历管理</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-800">主履历管理</h1>
+        <button type="button" className="btn-primary text-sm" onClick={() => setImportOpen(true)}>导入简历</button>
+      </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
@@ -48,6 +75,7 @@ export default function MasterResumePage() {
                   versions={versions}
                   selectedId={selectedVersion?.id ?? null}
                   onSelect={(v) => setSelectedVersion(v)}
+                  onDelete={handleDeleteVersion}
                 />
               )}
             </div>
@@ -65,12 +93,19 @@ export default function MasterResumePage() {
               <MasterResumeForm
                 key={selectedVersion?.id ?? "new"}
                 initialContent={selectedVersion?.content ?? {}}
+                currentVersionId={selectedVersion?.id ?? null}
                 onSave={handleSave}
               />
             </div>
           </div>
         </div>
       </div>
+
+      <ResumeImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSave={handleSave}
+      />
     </div>
   )
 }
