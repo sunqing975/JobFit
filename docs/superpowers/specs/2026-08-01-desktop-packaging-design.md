@@ -42,13 +42,24 @@
   - **现有数据迁移**：用户需手动把 `backend/jobfit.db` 复制到 `%APPDATA%/JobFit/`（README 说明）
 - `main.py`：挂载 `StaticFiles`（前端 dist 目录，`html=True`）
 
-### 3.3 打包脚本（`backend/` 下新增）
+### 3.3 打包脚本（`build.ps1` 位于项目根目录）
+
+打包涉及前后端两个子项目，脚本与产物统一放在**项目根目录**（与 backend 平级）：
+
+```
+JobFit/
+├── build.ps1            # 一键打包（前端 build → 拷 app/static → PyInstaller）
+├── dist/                # 打包产物（JobFit.exe），与 backend 平级
+└── backend/
+    ├── jobfit.spec      # PyInstaller onefile 配置（相对 backend 工作目录运行）
+    └── app/static/      # 前端静态产物（构建中间产物，gitignore）
+```
 
 - `jobfit.spec`：PyInstaller onefile 配置
   - `datas`：`rapidocr/models/*.onnx`、前端 `dist/`（拷入 `app/static`）
   - `hiddenimports`：uvicorn 全家、sqlmodel、rapidocr、pdfplumber、fitz 等
   - 图标（可选）
-- `build.ps1`：一键构建——`npm run build`（前端）→ 拷 dist → `pyinstaller jobfit.spec`
+- `build.ps1`（根目录）：`npm run build`（前端）→ 拷 `frontend/out` → 在 `backend/` 下执行 `pyinstaller --distpath ..\dist jobfit.spec`
 - 体积预估 300-500MB（onnxruntime ~60MB + RapidOCR 模型 ~20MB + Python 运行时），onefile 首启需解压（数秒-十几秒）
 
 ## 4. 影响范围
@@ -60,7 +71,7 @@
 | `backend/app/database.py` | 数据库路径动态化 |
 | `backend/app/main.py` | 托管前端静态文件 |
 | `backend/jobfit.spec`（新） | PyInstaller 配置 |
-| `backend/build.ps1`（新） | 一键打包脚本 |
+| `build.ps1`（新，根目录） | 一键打包脚本 |
 | `README.md` | 打包使用说明 + 数据迁移说明 |
 | `AGENTS.md` | 项目结构/启动方式补充 |
 

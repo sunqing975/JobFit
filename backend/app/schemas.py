@@ -28,6 +28,7 @@ class JobResumeResponse(BaseModel):
     base_resume_version_id: int
     raw_jd_text: str
     model_used: str
+    match_report: Optional[str] = None
     generated_content: Dict[str, Any]
     created_at: datetime
 
@@ -77,10 +78,10 @@ class ParsedResume(BaseModel):
     experience: list[dict] = []
     projects: list[dict] = []
     education: list[dict] = []
-    certifications: list[dict] = []
-    languages: list[dict] = []
-    awards: list[dict] = []
-    publications: list[dict] = []
+    certifications: Optional[str] = None
+    languages: Optional[str] = None
+    awards: Optional[str] = None
+    publications: Optional[str] = None
 
     model_config = {"extra": "ignore"}
 

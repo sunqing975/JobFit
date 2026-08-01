@@ -14,7 +14,7 @@
 
 | 层级 | 选用技术 | 选型理由 |
 | --- | --- | --- |
-| **前端 (Frontend)** | **Next.js (React) + Tailwind CSS** | 现代 UI 开发，结合 `@react-pdf/renderer` 实现浏览器端一键渲染导出高质量 PDF，无需后端复杂的 Headless 渲染。 |
+| **前端 (Frontend)** | **Next.js (React) + Tailwind CSS** | 现代 UI 开发，PDF 导出走浏览器打印（`window.print()` + `@media print` 样式），与页面预览渲染结果完全一致。 |
 | **后端 (Backend)** | **Python + FastAPI + LangChain** | 极简、高效的 API 开发框架，搭配 LangChain 可以极其方便地实现 Prompt 编排、流式输出以及与各类 LLM 的对接。 |
 | **数据库 (Database)** | **SQLite + SQLModel / SQLAlchemy** | 单文件零配置，开发阶段开箱即用；基于 ORM 抽象，后续可无缝切换至 PostgreSQL 或 MySQL。 |
 | **模型对接 (LLM)** | **OpenAI 兼容协议 (`ChatOpenAI`)** | 支持任何提供 OpenAI 标准格式的 API（如 OpenAI, DeepSeek, Moonshot, OneAPI 中转服务等）。 |
@@ -59,7 +59,7 @@
 ### 3. 一键 PDF 导出
 
 * 前端拿到生成的针对性 JSON 后，在页面右侧提供实时预览。
-* 点击“导出 PDF”按钮，前端直接将其渲染并下载为布局精准的 PDF 文件，不增加服务端开销。
+* 点击“导出 PDF”按钮，通过浏览器打印（`window.print()` + `@media print` 样式）导出，与页面预览渲染完全一致，不增加服务端开销。
 
 ### 4. 动态 LLM 模型配置（Model Configs）
 
@@ -225,8 +225,8 @@ async def generate_resume(
 将 Web 版打包为单文件 exe：双击启动，自动拉起浏览器访问，无需安装依赖。
 
 ```powershell
-.\backend\build.ps1        # 一键打包（构建前端 + PyInstaller）
-.\backend\dist\JobFit.exe  # 打包产物
+.\build.ps1                # 一键打包（构建前端 + PyInstaller），位于项目根目录
+.\dist\JobFit.exe          # 打包产物（与 backend 平级）
 ```
 
 - 前端静态导出（`next build`）由 FastAPI 同端口托管，页面与 API 天然同源，无 CORS 问题

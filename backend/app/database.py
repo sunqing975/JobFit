@@ -43,6 +43,13 @@ def _migrate():
                 "FROM tailored_resumes"
             ))
 
+        job_cols = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(job_resumes)")).fetchall()
+        }
+        if "match_report" not in job_cols:
+            conn.execute(text("ALTER TABLE job_resumes ADD COLUMN match_report TEXT"))
+
         for old_table in ("master_resume_versions", "tailored_resumes"):
             if old_table in tables:
                 conn.execute(text(f"DROP TABLE {old_table}"))

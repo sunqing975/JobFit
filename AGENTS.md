@@ -19,7 +19,7 @@ JobFit 是一个基于大模型的智能简历定制平台：用户一次性维�
 
 | 层级 | 技术 |
 | --- | --- |
-| 前端 | Next.js 15 (App Router, `app/`) + React 19 + Tailwind CSS 3，`@react-pdf/renderer` 浏览器端渲染 PDF |
+| 前端 | Next.js 15 (App Router, `app/`) + React 19 + Tailwind CSS 3，PDF 导出走浏览器打印（`window.print()` + `@media print` 样式，与预览完全一致） |
 | 后端 | Python + FastAPI + LangChain (`ChatOpenAI`) + SQLModel/SQLAlchemy |
 | 数据库 | SQLite 单文件（`backend/jobfit.db`），ORM 抽象后可切换 PostgreSQL/MySQL |
 | LLM | OpenAI 兼容协议，UI 内动态配置 api_base / api_key / model / temperature |
@@ -38,10 +38,11 @@ JobFit/
 │   │   └── routes/           # base_resume.py / job_resume.py / optimize.py / llm_config.py / resume_import.py / ocr.py
 │   ├── run.py                # 打包版入口：探测空闲端口 + 自动开浏览器
 │   ├── jobfit.spec           # PyInstaller onefile 配置（datas: 前端静态产物 + rapidocr 模型）
-│   ├── build.ps1             # 一键打包：前端构建 → 拷入 app/static → PyInstaller
 │   ├── requirements.txt
 │   ├── .env.example          # DATABASE_URL=sqlite:///./jobfit.db
 │   └── venv/                 # 虚拟环境（勿提交）
+├── build.ps1                 # 一键打包（根目录）：前端构建 → 拷入 app/static → PyInstaller
+├── dist/                     # 打包产物（JobFit.exe），与 backend 平级
 ├── frontend/                 # Next.js 前端
 │   ├── app/                  # page.tsx(首页) / base-resume / job-resume / settings
 │   ├── components/           # BaseResumeForm / JobResumeForm / ResumePreview / PDFExporter / VersionHistory / LLMConfigForm / Navigation
@@ -66,7 +67,7 @@ JobFit/
 - Linux/macOS 使用 `./start.sh`
 - 后端手动启动：`backend/venv/Scripts/uvicorn app.main:app --reload`（工作目录 `backend/`）
 - 前端手动启动：`npm run dev`（工作目录 `frontend/`）
-- 桌面打包：`.\backend\build.ps1` → `backend/dist/JobFit.exe`（前端静态导出由后端同端口托管，打包版数据库在 `%APPDATA%\JobFit\jobfit.db`）
+- 桌面打包：`.\build.ps1` → `dist\JobFit.exe`（前端静态导出由后端同端口托管，打包版数据库在 `%APPDATA%\JobFit\jobfit.db`）
 
 ## 数据模型
 
@@ -75,7 +76,7 @@ JobFit/
 - 基本信息：`avatar`(Base64 data URL, <2MB)、`name`、`title`、`email`、`phone`、`location`、`website`、`linkedin`、`github`
 - `summary` 个人总结
 - `skillCategories`（分类技能）、`experience`（工作经历，含 techStack）、`projects`（项目经历）、`education`（教育背景）
-- 折叠面板：`certifications`、`languages`、`awards`、`publications`
+- 折叠面板：`certifications`、`languages`、`awards`、`publications`（均为 Markdown 文本字符串，预览用 react-markdown 渲染）
 
 版本控制：每次保存基础简历自动生成新版本号（递增），全量 JSON 存储，不覆盖旧数据。
 

@@ -13,6 +13,8 @@ interface Props {
   ) => Promise<void>
 }
 
+const md = (v: unknown): string => (typeof v === "string" ? v : "")
+
 interface ExperienceItem {
   company: string; location?: string; role: string; period: string; bullets: string[]; techStack?: string[]
 }
@@ -29,29 +31,9 @@ interface SkillCategory {
   category: string; skills: string[]
 }
 
-interface CertificationItem {
-  name: string; issuer: string; date: string; url?: string
-}
-
-interface LanguageItem {
-  name: string; proficiency: string
-}
-
-interface AwardItem {
-  name: string; issuer: string; date: string
-}
-
-interface PublicationItem {
-  title: string; publisher: string; date: string; url?: string
-}
-
 const emptyExperience = (): ExperienceItem => ({ company: "", role: "", period: "", bullets: [""], techStack: [] })
 const emptyProject = (): ProjectItem => ({ name: "", role: "", period: "", description: "", bullets: [""], techStack: [] })
 const emptyEducation = (): EducationItem => ({ school: "", degree: "", major: "", period: "" })
-const emptyCert = (): CertificationItem => ({ name: "", issuer: "", date: "" })
-const emptyLang = (): LanguageItem => ({ name: "", proficiency: "流利" })
-const emptyAward = (): AwardItem => ({ name: "", issuer: "", date: "" })
-const emptyPub = (): PublicationItem => ({ title: "", publisher: "", date: "" })
 
 export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -75,10 +57,10 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
   const [experience, setExperience] = useState<ExperienceItem[]>((initialContent.experience as ExperienceItem[]) || [])
   const [projects, setProjects] = useState<ProjectItem[]>((initialContent.projects as ProjectItem[]) || [])
   const [education, setEducation] = useState<EducationItem[]>((initialContent.education as EducationItem[]) || [])
-  const [certifications, setCertifications] = useState<CertificationItem[]>((initialContent.certifications as CertificationItem[]) || [])
-  const [languages, setLanguages] = useState<LanguageItem[]>((initialContent.languages as LanguageItem[]) || [])
-  const [awards, setAwards] = useState<AwardItem[]>((initialContent.awards as AwardItem[]) || [])
-  const [publications, setPublications] = useState<PublicationItem[]>((initialContent.publications as PublicationItem[]) || [])
+  const [certifications, setCertifications] = useState<string>(md(initialContent.certifications))
+  const [languages, setLanguages] = useState<string>(md(initialContent.languages))
+  const [awards, setAwards] = useState<string>(md(initialContent.awards))
+  const [publications, setPublications] = useState<string>(md(initialContent.publications))
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -101,10 +83,10 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
     experience,
     projects,
     education,
-    certifications: certifications.filter(c => c.name.trim()) || undefined,
-    languages: languages.filter(l => l.name.trim()) || undefined,
-    awards: awards.filter(a => a.name.trim()) || undefined,
-    publications: publications.filter(p => p.title.trim()) || undefined,
+    certifications: certifications.trim() || undefined,
+    languages: languages.trim() || undefined,
+    awards: awards.trim() || undefined,
+    publications: publications.trim() || undefined,
   })
 
   const handleSave = async (mode: "update" | "create") => {
@@ -363,50 +345,43 @@ export function BaseResumeForm({ initialContent, currentVersionId, onSave }: Pro
           <div className="card-body space-y-6">
             {/* 证书 */}
             <div>
-              <div className="flex items-center justify-between mb-3"><h4 className="text-sm font-medium text-slate-700">证书认证</h4><button type="button" className="btn-ghost text-xs" onClick={() => setCertifications([...certifications, emptyCert()])}>+ 添加</button></div>
-              {certifications.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 mb-2">
-                  <input className="form-input flex-1" placeholder="证书名称" value={item.name} onChange={e => { const c = [...certifications]; c[i].name = e.target.value; setCertifications(c) }} />
-                  <input className="form-input flex-1" placeholder="颁发机构" value={item.issuer} onChange={e => { const c = [...certifications]; c[i].issuer = e.target.value; setCertifications(c) }} />
-                  <input className="form-input w-28" placeholder="日期" value={item.date} onChange={e => { const c = [...certifications]; c[i].date = e.target.value; setCertifications(c) }} />
-                  <button type="button" className="btn-ghost text-xs text-red-500" onClick={() => setCertifications(certifications.filter((_, j) => j !== i))}>✕</button>
-                </div>
-              ))}
+              <h4 className="text-sm font-medium text-slate-700 mb-2">证书认证</h4>
+              <textarea
+                className="form-input w-full min-h-[96px] font-mono text-sm resize-y"
+                placeholder={"支持 Markdown，例如：\n- 软件设计师（软考中级，2023）\n- 大学英语六级 (CET-6)"}
+                value={certifications}
+                onChange={(e) => setCertifications(e.target.value)}
+              />
             </div>
             {/* 语言 */}
             <div>
-              <div className="flex items-center justify-between mb-3"><h4 className="text-sm font-medium text-slate-700">语言能力</h4><button type="button" className="btn-ghost text-xs" onClick={() => setLanguages([...languages, emptyLang()])}>+ 添加</button></div>
-              {languages.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 mb-2">
-                  <input className="form-input flex-1" placeholder="语言" value={item.name} onChange={e => { const c = [...languages]; c[i].name = e.target.value; setLanguages(c) }} />
-                  <select className="form-input w-28" value={item.proficiency} onChange={e => { const c = [...languages]; c[i].proficiency = e.target.value; setLanguages(c) }}><option>母语</option><option>流利</option><option>商务</option><option>基础</option></select>
-                  <button type="button" className="btn-ghost text-xs text-red-500" onClick={() => setLanguages(languages.filter((_, j) => j !== i))}>✕</button>
-                </div>
-              ))}
+              <h4 className="text-sm font-medium text-slate-700 mb-2">语言能力</h4>
+              <textarea
+                className="form-input w-full min-h-[72px] font-mono text-sm resize-y"
+                placeholder={"支持 Markdown，例如：\n- 中文（母语）\n- 英语（流利）"}
+                value={languages}
+                onChange={(e) => setLanguages(e.target.value)}
+              />
             </div>
             {/* 获奖 */}
             <div>
-              <div className="flex items-center justify-between mb-3"><h4 className="text-sm font-medium text-slate-700">获奖荣誉</h4><button type="button" className="btn-ghost text-xs" onClick={() => setAwards([...awards, emptyAward()])}>+ 添加</button></div>
-              {awards.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 mb-2">
-                  <input className="form-input flex-1" placeholder="奖项名称" value={item.name} onChange={e => { const c = [...awards]; c[i].name = e.target.value; setAwards(c) }} />
-                  <input className="form-input flex-1" placeholder="颁发机构" value={item.issuer} onChange={e => { const c = [...awards]; c[i].issuer = e.target.value; setAwards(c) }} />
-                  <input className="form-input w-28" placeholder="日期" value={item.date} onChange={e => { const c = [...awards]; c[i].date = e.target.value; setAwards(c) }} />
-                  <button type="button" className="btn-ghost text-xs text-red-500" onClick={() => setAwards(awards.filter((_, j) => j !== i))}>✕</button>
-                </div>
-              ))}
+              <h4 className="text-sm font-medium text-slate-700 mb-2">获奖荣誉</h4>
+              <textarea
+                className="form-input w-full min-h-[72px] font-mono text-sm resize-y"
+                placeholder={"支持 Markdown，例如：\n- 一等奖学金（2023）"}
+                value={awards}
+                onChange={(e) => setAwards(e.target.value)}
+              />
             </div>
             {/* 出版物 */}
             <div>
-              <div className="flex items-center justify-between mb-3"><h4 className="text-sm font-medium text-slate-700">出版物</h4><button type="button" className="btn-ghost text-xs" onClick={() => setPublications([...publications, emptyPub()])}>+ 添加</button></div>
-              {publications.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 mb-2">
-                  <input className="form-input flex-1" placeholder="标题" value={item.title} onChange={e => { const c = [...publications]; c[i].title = e.target.value; setPublications(c) }} />
-                  <input className="form-input flex-1" placeholder="出版方" value={item.publisher} onChange={e => { const c = [...publications]; c[i].publisher = e.target.value; setPublications(c) }} />
-                  <input className="form-input w-28" placeholder="日期" value={item.date} onChange={e => { const c = [...publications]; c[i].date = e.target.value; setPublications(c) }} />
-                  <button type="button" className="btn-ghost text-xs text-red-500" onClick={() => setPublications(publications.filter((_, j) => j !== i))}>✕</button>
-                </div>
-              ))}
+              <h4 className="text-sm font-medium text-slate-700 mb-2">出版物</h4>
+              <textarea
+                className="form-input w-full min-h-[72px] font-mono text-sm resize-y"
+                placeholder={"支持 Markdown，例如：\n- BMTAC: A Decentralized...（CCF C 类会议，2024）"}
+                value={publications}
+                onChange={(e) => setPublications(e.target.value)}
+              />
             </div>
           </div>
         )}

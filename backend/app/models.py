@@ -21,6 +21,7 @@ class JobResume(SQLModel, table=True):
     base_resume_version_id: int = Field(foreign_key="base_resume_versions.id")
     raw_jd_text: str
     model_used: str
+    match_report: Optional[str] = Field(default=None, description="JD 匹配度评估报告")
     generated_content: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=datetime.utcnow)
     deleted_at: Optional[datetime] = Field(default=None, index=True)

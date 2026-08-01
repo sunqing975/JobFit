@@ -6,11 +6,12 @@ import type { BaseResumeVersion } from "@/lib/api"
 
 interface Props {
   baseVersions: BaseResumeVersion[]
-  onGenerate: (data: { base_resume_version_id: number; raw_jd_text: string }) => Promise<void>
+  onGenerate: (data: { base_resume_version_id: number; raw_jd_text: string }) => void
+  onStop: () => void
   generating: boolean
 }
 
-export function JobResumeForm({ baseVersions, onGenerate, generating }: Props) {
+export function JobResumeForm({ baseVersions, onGenerate, generating, onStop }: Props) {
   const [jdText, setJdText] = useState("")
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null)
   const [ocrOpen, setOcrOpen] = useState(false)
@@ -98,13 +99,18 @@ export function JobResumeForm({ baseVersions, onGenerate, generating }: Props) {
         {jdText.trim() && <p className="text-xs text-slate-400 mt-1">{jdText.trim().length} 字符</p>}
       </div>
 
-      <button type="submit" disabled={generating} className="btn-primary w-full">
-        {generating ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            AI 生成中...
-          </span>
-        ) : "生成岗位简历"}
+      <button
+        type="submit"
+        disabled={generating}
+        className="btn-primary w-full"
+        onClick={(e) => {
+          if (generating) {
+            e.preventDefault()
+            onStop()
+          }
+        }}
+      >
+        {generating ? "停止生成" : "生成岗位简历"}
       </button>
 
       {ocrOpen && (

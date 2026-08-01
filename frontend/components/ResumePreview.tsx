@@ -1,17 +1,17 @@
 "use client"
 
+import ReactMarkdown from "react-markdown"
+
 interface Props {
   content: Record<string, unknown>
 }
+
+const md = (v: unknown): string => (typeof v === "string" ? v : "")
 
 interface ExpItem { company: string; location?: string; role: string; period: string; bullets: string[]; techStack?: string[] }
 interface ProjItem { name: string; role: string; period: string; description: string; bullets: string[]; techStack?: string[]; url?: string }
 interface EduItem { school: string; degree: string; major: string; period: string; gpa?: string }
 interface SkillCat { category: string; skills: string[] }
-interface CertItem { name: string; issuer: string; date: string; url?: string }
-interface LangItem { name: string; proficiency: string }
-interface AwardItem { name: string; issuer: string; date: string }
-interface PubItem { title: string; publisher: string; date: string; url?: string }
 
 function Section({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
@@ -19,6 +19,17 @@ function Section({ title, children, className = "" }: { title: string; children:
       <div className="section-title">{title}</div>
       {children}
     </div>
+  )
+}
+
+function MdSection({ title, text }: { title: string; text: string }) {
+  if (!text.trim()) return null
+  return (
+    <Section title={title} className="mt-6">
+      <div className="markdown-body">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    </Section>
   )
 }
 
@@ -37,10 +48,6 @@ export function ResumePreview({ content }: Props) {
   const experience = (content.experience as ExpItem[]) || []
   const projects = (content.projects as ProjItem[]) || []
   const education = (content.education as EduItem[]) || []
-  const certifications = (content.certifications as CertItem[]) || []
-  const languages = (content.languages as LangItem[]) || []
-  const awards = (content.awards as AwardItem[]) || []
-  const publications = (content.publications as PubItem[]) || []
 
   const contactItems = [
     email && `📧 ${email}`,
@@ -182,65 +189,16 @@ export function ResumePreview({ content }: Props) {
       )}
 
       {/* Certifications */}
-      {certifications.filter(c => c.name).length > 0 && (
-        <Section title="证书认证" className="mt-6">
-          <div className="space-y-2">
-            {certifications.filter(c => c.name).map((cert, i) => (
-              <div key={i} className="flex items-baseline justify-between text-sm">
-                <div>
-                  <span className="text-slate-700 font-medium">{cert.name}</span>
-                  <span className="text-slate-400 ml-2">{cert.issuer}</span>
-                </div>
-                <span className="text-slate-400">{cert.date}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
+      <MdSection title="证书认证" text={md(content.certifications)} />
 
       {/* Languages */}
-      {languages.filter(l => l.name).length > 0 && (
-        <Section title="语言能力" className="mt-6">
-          <div className="flex flex-wrap gap-x-6 gap-y-1">
-            {languages.filter(l => l.name).map((lang, i) => (
-              <span key={i} className="text-sm text-slate-700">
-                {lang.name}<span className="text-slate-400 ml-1">({lang.proficiency})</span>
-              </span>
-            ))}
-          </div>
-        </Section>
-      )}
+      <MdSection title="语言能力" text={md(content.languages)} />
 
       {/* Awards */}
-      {awards.filter(a => a.name).length > 0 && (
-        <Section title="获奖荣誉" className="mt-6">
-          <div className="space-y-2">
-            {awards.filter(a => a.name).map((award, i) => (
-              <div key={i} className="flex items-baseline justify-between text-sm">
-                <span className="text-slate-700">{award.name}<span className="text-slate-400 ml-2">{award.issuer}</span></span>
-                <span className="text-slate-400">{award.date}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
+      <MdSection title="获奖荣誉" text={md(content.awards)} />
 
       {/* Publications */}
-      {publications.filter(p => p.title).length > 0 && (
-        <Section title="出版物" className="mt-6">
-          <div className="space-y-2">
-            {publications.filter(p => p.title).map((pub, i) => (
-              <div key={i} className="flex items-baseline justify-between text-sm">
-                <div>
-                  <span className="text-slate-700 font-medium">{pub.title}</span>
-                  <span className="text-slate-400 ml-2">{pub.publisher}</span>
-                </div>
-                <span className="text-slate-400">{pub.date}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
+      <MdSection title="出版物" text={md(content.publications)} />
     </div>
   )
 }
