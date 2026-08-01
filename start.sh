@@ -85,7 +85,7 @@ if [ "$MODE" != "frontend" ]; then
 fi
 
 if [ "$MODE" != "backend" ]; then
-    if [ "$INSTALL_DEPS" = true ]; then
+    if [ "$INSTALL_DEPS" = true ] || [ ! -d "$FRONTEND_DIR/node_modules" ]; then
         echo "==> 安装前端依赖..."
         (cd "$FRONTEND_DIR" && npm install --silent)
     fi
