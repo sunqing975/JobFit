@@ -12,3 +12,4 @@ python-multipart==0.0.20
 rapidocr==3.9.2
 onnxruntime==1.28.0
 pymupdf==1.28.0
+pyinstaller==6.21.0
