@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $Root = $PSScriptRoot
 $Frontend = Join-Path $Root "frontend"

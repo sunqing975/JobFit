@@ -36,8 +36,9 @@ jobs:
         run: npm ci
 
       - name: Build exe
+        working-directory: ./
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File build.ps1
+        run: ./build.ps1
 
       - uses: actions/upload-artifact@v4
         with:
